@@ -1,0 +1,29 @@
+name: Pytests
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # TODO: Should these be a little higher?
+        python-version: [3.6, 3.7]
+    steps:
+      - run: apt install -y netcdf-bin
+
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run tests
+        run: pytest
