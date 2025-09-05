@@ -12,7 +12,7 @@ jobs:
         # TODO: Should these be a little higher?
         python-version: [3.6, 3.7]
     steps:
-      - run: apt install -y netcdf-bin
+      - run: sudo apt-get install -y netcdf-bin
 
       - uses: actions/checkout@v4
 
@@ -27,3 +27,17 @@ jobs:
 
       - name: Run tests
         run: pytest
+
+  codecov:
+    needs: pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install codecov
+        run: pip install codecov
+
+      - name: Upload coverage to codecov
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: codecov
