@@ -8,9 +8,10 @@ jobs:
   pytest:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        # TODO: Should these be a little higher?
-        python-version: [3.6, 3.7]
+        # The original 3.6 and 3.7 are no longer in the runners tool cache (too old), so we'll go with our standard
+        python-version: [3.11]
     steps:
       - run: sudo apt-get install -y netcdf-bin
 
