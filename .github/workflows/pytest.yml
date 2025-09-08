@@ -1,0 +1,44 @@
+name: Pytests
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The original 3.6 and 3.7 are no longer in the runners tool cache (too old), so we'll go with 3.9
+        python-version: [3.9]
+    steps:
+      - run: sudo apt-get install -y netcdf-bin
+
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run tests
+        run: python -m pytest
+
+  codecov:
+    needs: pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install codecov
+        run: pip install codecov
+
+      - name: Upload coverage to codecov
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: codecov
