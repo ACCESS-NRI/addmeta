@@ -27,7 +27,7 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Run tests
-        run: pytest
+        run: python -m pytest
 
   codecov:
     needs: pytest
