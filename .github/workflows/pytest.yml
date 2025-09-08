@@ -10,8 +10,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The original 3.6 and 3.7 are no longer in the runners tool cache (too old), so we'll go with our standard
-        python-version: [3.11]
+        # The original 3.6 and 3.7 are no longer in the runners tool cache (too old), so we'll go with 3.9
+        python-version: [3.9]
     steps:
       - run: sudo apt-get install -y netcdf-bin
 
