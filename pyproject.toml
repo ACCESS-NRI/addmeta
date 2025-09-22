@@ -38,7 +38,7 @@ addmeta = "addmeta.cli:main_argv"
 build-backend = "setuptools.build_meta"
 requires = [
     "setuptools",
-    "versioneer",
+    "versioneer[toml]",
 ]
 
 [tool.setuptools.packages.find]
