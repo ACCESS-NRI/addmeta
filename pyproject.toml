@@ -13,7 +13,7 @@ description = "Add meta data to netCDF files."
 license = { file = "LICENSE" }
 readme = "README.md"
 keywords = ["ACCESS-NRI", "netcdf", "metadata"]
-requires-python = "~=3.9"
+requires-python = ">=3.9"
 dependencies = [
     "netcdf4",
     "pyyaml",
