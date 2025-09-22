@@ -4,14 +4,14 @@ on:
     branches:
       - master
   pull_request:
+  workflow_call:
 jobs:
   pytest:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        # The original 3.6 and 3.7 are no longer in the runners tool cache (too old), so we'll go with 3.9
-        python-version: [3.9]
+        python-version: [3.9, 3.10, 3.11, 3.12, 3.13]
     steps:
       - run: sudo apt-get install -y netcdf-bin
 
@@ -24,7 +24,7 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements-dev.txt
+        run: pip install .[dev]
 
       - name: Run tests
         run: python -m pytest
