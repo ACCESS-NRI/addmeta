@@ -112,6 +112,7 @@ jobs:
           create-args: >-
             conda-build
             anaconda-client
+            versioneer
       
       - name: Publish package to Anaconda.org
         id: publish-conda-package
