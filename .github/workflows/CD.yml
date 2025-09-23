@@ -1,11 +1,14 @@
 name: CD
 
 on:
-  push:
-    tags:
-      - '**'
+  pull_request:
+#   push:
+#     tags:
+#       - '**'
+# TODO: remove 'pull_request' and uncomment the 'push'
 env:
-  BUILD_FOLDER: ${{github.workspace}}/dist
+  PYTHON_PACKAGE_ARTIFACT: python-package
+  CONDA_PACKAGE_ARTIFACT: conda-package
 
 jobs:
   test:
@@ -47,11 +50,12 @@ jobs:
       - name: Build distributions
         run: |
           git clean -xfd
-          pyproject-build --outdir ${{env.BUILD_FOLDER}}
+          pyproject-build
 
       - uses: actions/upload-artifact@v4
         with:
-          path: ${{env.BUILD_FOLDER}}
+          name: ${{ env.PYTHON_PACKAGE_ARTIFACT }}
+          path: dist/
 
   publish-pypi-package:
     name: Publish package to PyPI
@@ -62,23 +66,36 @@ jobs:
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v5
+        with:
+          name: ${{ env.PYTHON_PACKAGE_ARTIFACT }}
+
+    #   - name: Publish package to PyPI
+    #     uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
       
-      - name: Publish package to PyPI
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+      - name: List artifacts
+        shell: bash -x {0}
+        run: |
+          ls -l ${{ env.PYTHON_PACKAGE_ARTIFACT }}
+    
+    # TODO: remove List artifacts step and uncomment Publish package to PyPI step above
 
   publish-conda-package:
     name: Publish package to Anaconda.org
     runs-on: ubuntu-latest
     needs: build_python_wheel
+    outputs:
+      files: ${{ steps.publish-conda-package.outputs.paths }}
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v5
+        with:
+          name: ${{ env.PYTHON_PACKAGE_ARTIFACT }}
       
       # We need the tarball path to be used within the conda recipe
       # So, we get its path and set it as environment variable
       - name: Set tarball path env variable
         run: |
-          TAR_PATH=$(find ${{ env.BUILD_FOLDER }} -type f -name "*.tar.gz" | head -n 1)
+          TAR_PATH=$(find ${{ env.PYTHON_PACKAGE_ARTIFACT }} -type f -name "*.tar.gz" | head -n 1)
           echo "TARBALL_PATH=$TAR_PATH" >> $GITHUB_ENV
 
       - name: Set up micromamba
@@ -89,11 +106,20 @@ jobs:
             anaconda-client
       
       - name: Publish package to Anaconda.org
+        id: publish-conda-package
         uses: ACCESS-NRI/action-build-and-upload-conda-packages@v3.0.0
         with:
           meta_yaml_dir: conda/meta.yaml
           user: ${{ secrets.ANACONDA_USERNAME }}
           token: ${{ secrets.ANACONDA_TOKEN }}
+          upload: false
+          # TODO: remove upload: false
+     
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.CONDA_PACKAGE_ARTIFACT }}
+          path: |
+            ${{ steps.publish-conda-package.outputs.paths }}
 
   create-github-release:
     name: Create GitHub Release
@@ -103,40 +129,51 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v5
 
-      - name: Create Release
-        uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 #v2.3.3
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: ${{needs.get-package-name.outputs.package-name}} ${{ github.ref_name }}
-          generate_release_notes: true
-          fail_on_unmatched_files: true
-          files: |
-            ${{ env.BUILD_FOLDER }}/*
+    #   - name: Create Release
+    #     uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 #v2.3.3
+    #     with:
+    #       tag_name: ${{ github.ref_name }}
+    #       name: ${{needs.get-package-name.outputs.package-name}} ${{ github.ref_name }}
+    #       generate_release_notes: true
+    #       fail_on_unmatched_files: true
+    #       files: |
+    #         ${{ env.PYTHON_PACKAGE_ARTIFACT }}/*
+    #         ${{ env.CONDA_PACKAGE_ARTIFACT }}/*
+
+      - name: List artifacts
+        shell: bash -x {0}
+        run: |
+          ls -l ${{ env.PYTHON_PACKAGE_ARTIFACT }}
+          ls -l ${{ env.CONDA_PACKAGE_ARTIFACT }}
     
-  cleanup-on-failure:
-    name: Cleanup on failure
-    runs-on: ubuntu-latest
-    needs: create-github-release
-    # Run this job if any of the previous jobs failed (and don't skip if any of the needed jobs is skipped)
-    if: ${{ ( always() && failure() ) || cancelled() }}
-    permissions:
-      contents: write
-    env:
-      GH_TOKEN: ${{ github.token }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-tags: true
-          fetch-depth: 0 
+      # TODO: remove List artifacts step and uncomment Create Release step above
+    
+#   cleanup-on-failure:
+#     name: Cleanup on failure
+#     runs-on: ubuntu-latest
+#     needs: create-github-release
+#     # Run this job if any of the previous jobs failed (and don't skip if any of the needed jobs is skipped)
+#     if: ${{ ( always() && failure() ) || cancelled() }}
+#     permissions:
+#       contents: write
+#     env:
+#       GH_TOKEN: ${{ github.token }}
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-tags: true
+#           fetch-depth: 0 
       
-      # Delete newly created tag
-      - name: Cleanup tag
-        run: |
-          git push origin ':${{ github.ref }}'
-          echo "A job in the current workflow failed. Tag '${{ github.ref }}' was deleted."
+#       # Delete newly created tag
+#       - name: Cleanup tag
+#         run: |
+#           git push origin ':${{ github.ref }}'
+#           echo "A job in the current workflow failed. Tag '${{ github.ref }}' was deleted."
       
-      # Delete newly created GitHub release
-      - name: Cleanup GitHub release
-        run: |
-           gh release delete '${{ github.ref_name }}' && echo "GitHub release was deleted." || echo "No GitHub release '${{ github.ref_name }}' to delete."
+#       # Delete newly created GitHub release
+#       - name: Cleanup GitHub release
+#         run: |
+#            gh release delete '${{ github.ref_name }}' && echo "GitHub release was deleted." || echo "No GitHub release '${{ github.ref_name }}' to delete."
+
+# TODO: uncomment cleanup-on-failure job above
