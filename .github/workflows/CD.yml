@@ -70,6 +70,7 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: ${{ env.PYTHON_PACKAGE_ARTIFACT }}
+          path: dist/
 
     #   - name: Publish package to PyPI
     #     uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
@@ -105,6 +106,7 @@ jobs:
       - name: Set up micromamba
         uses: mamba-org/setup-micromamba@v2
         with:
+          environment-name: build-env
           create-args: >-
             conda-build
             anaconda-client
