@@ -66,6 +66,7 @@ jobs:
       id-token: write
     steps:
       - name: Download artifact
+        id: download-artifact
         uses: actions/download-artifact@v5
         with:
           name: ${{ env.PYTHON_PACKAGE_ARTIFACT }}
@@ -76,7 +77,7 @@ jobs:
       - name: List artifacts
         shell: bash -x {0}
         run: |
-          ls -l ${{ env.PYTHON_PACKAGE_ARTIFACT }}
+          ls -l ${{ steps.download-artifact.outputs.download-path }}
     
     # TODO: remove List artifacts step and uncomment Publish package to PyPI step above
 
@@ -88,6 +89,7 @@ jobs:
       files: ${{ steps.publish-conda-package.outputs.paths }}
     steps:
       - name: Download artifact
+        id: download-artifact
         uses: actions/download-artifact@v5
         with:
           name: ${{ env.PYTHON_PACKAGE_ARTIFACT }}
@@ -96,8 +98,9 @@ jobs:
       # So, we get its path and set it as environment variable
       - name: Set tarball path env variable
         run: |
-          TAR_PATH=$(find ${{ env.PYTHON_PACKAGE_ARTIFACT }} -type f -name "*.tar.gz" | head -n 1)
+          TAR_PATH=$(find ${{ steps.download-artifact.outputs.download-path }} -type f -name "*.tar.gz" | head -n 1)
           echo "TARBALL_PATH=$TAR_PATH" >> $GITHUB_ENV
+          echo $TAR_PATH # TODO: remove this line
 
       - name: Set up micromamba
         uses: mamba-org/setup-micromamba@v2
@@ -144,8 +147,8 @@ jobs:
       - name: List artifacts
         shell: bash -x {0}
         run: |
-          ls -l ${{ env.PYTHON_PACKAGE_ARTIFACT }}
-          ls -l ${{ env.CONDA_PACKAGE_ARTIFACT }}
+          ls -R
+          ls -l ${{ steps.download-artifact.outputs.download-path }}
     
       # TODO: remove List artifacts step and uncomment Create Release step above
     
