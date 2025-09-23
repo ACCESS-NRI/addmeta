@@ -34,7 +34,7 @@ jobs:
   
   build_python_wheel:
     name: Build Python package
-    runs-on: linux-latest
+    runs-on: ubuntu-latest
     needs: test
     steps:
       - uses: actions/checkout@v5
