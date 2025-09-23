@@ -2,11 +2,9 @@
 
 from __future__ import print_function
 
-import errno
 import yaml
-import collections
+from collections.abc import Mapping
 import netCDF4 as nc
-import argparse
 from pathlib import Path
 
 # From https://gist.github.com/angstwad/bf22d1822c38a92ec0a9
@@ -20,11 +18,10 @@ def dict_merge(dct, merge_dct):
     :return: None
     """
     for k, v in merge_dct.items():
-        if (k in dct and isinstance(dct[k], dict)
-                and isinstance(merge_dct[k], collections.Mapping)):
-            dict_merge(dct[k], merge_dct[k])
+        if isinstance(dct.get(k), dict) and isinstance(v, Mapping):
+            dict_merge(dct[k], v)
         else:
-            dct[k] = merge_dct[k]
+            dct[k] = v
 
 def read_yaml(fname):
     """Parse yaml file and return a dict."""

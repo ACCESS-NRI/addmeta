@@ -1,0 +1,61 @@
+[project]
+name = "addmeta"
+dynamic = ["version"]
+authors = [
+    {name = "Aidan Heerdegen", email="aidan.heerdegen@anu.edu.au"},
+    {name = "Tommy Gatti", email="tommy.gatti@anu.edu.au"},
+    {name = "Davide Marchegiani", email="davide.marchegiani@anu.edu.au"},
+]
+maintainers = [
+    {name = "Aidan Heerdegen", email="aidan.heerdegen@anu.edu.au"},
+]
+description = "Add meta data to netCDF files."
+license = { file = "LICENSE" }
+readme = "README.md"
+keywords = ["ACCESS-NRI", "netcdf", "metadata"]
+requires-python = ">=3.9"
+dependencies = [
+    "netcdf4",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = [
+    "coverage",
+    "codecov",
+    "six",
+    "pytest-cov",
+    "pytest",
+]
+
+[project.urls]
+Repository = "https://github.com/ACCESS-NRI/addmeta"
+
+[project.scripts]
+addmeta = "addmeta.cli:main_argv"
+
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [
+    "setuptools",
+    "versioneer[toml]",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+namespaces = false
+
+[tool.versioneer]
+VCS = "git"
+style = "pep440"
+versionfile_source = "addmeta/_version.py"
+versionfile_build = "addmeta/_version.py"
+tag_prefix = ""
+parentdir_prefix = "addmeta-"
+
+[tool.wheel]
+universal = true
+
+[tool.pytest.ini_options]
+pythonpath = "addmeta"
+addopts = "--cov=addmeta"
