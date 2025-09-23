@@ -89,6 +89,8 @@ jobs:
     outputs:
       files: ${{ steps.publish-conda-package.outputs.paths }}
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download artifact
         id: download-artifact
         uses: actions/download-artifact@v5
@@ -115,7 +117,7 @@ jobs:
         id: publish-conda-package
         uses: ACCESS-NRI/action-build-and-upload-conda-packages@v3.0.0
         with:
-          meta_yaml_dir: conda/meta.yaml
+          meta_yaml_dir: conda
           user: ${{ secrets.ANACONDA_USERNAME }}
           token: ${{ secrets.ANACONDA_TOKEN }}
           upload: false
