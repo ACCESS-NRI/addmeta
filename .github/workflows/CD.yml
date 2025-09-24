@@ -1,20 +1,17 @@
 name: CD
 
 on:
-  pull_request:
-#   push:
-#     tags:
-#       - '**'
-# TODO: remove 'pull_request' and uncomment the 'push'
+  push:
+    tags:
+      - '**'
 env:
   PYTHON_PACKAGE_ARTIFACT: python-package
   CONDA_PACKAGE_ARTIFACT: conda-package
 
 jobs:
-#   test:
-#     name: Run tests
-#     uses: ./.github/workflows/pytest.yml
-# TODO: uncomment test job above
+  test:
+    name: Run tests
+    uses: ./.github/workflows/pytest.yml
 
   get-package-name:
     name: Get package name
@@ -36,7 +33,7 @@ jobs:
   build_python_wheel:
     name: Build Python package
     runs-on: ubuntu-latest
-    # needs: test TODO: uncomment
+    needs: test
     steps:
       - uses: actions/checkout@v5
         with:
@@ -72,15 +69,8 @@ jobs:
           name: ${{ env.PYTHON_PACKAGE_ARTIFACT }}
           path: dist/
 
-    #   - name: Publish package to PyPI
-    #     uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
-      
-      - name: List artifacts
-        shell: bash -x {0}
-        run: |
-          ls -l ${{ steps.download-artifact.outputs.download-path }}
-    
-    # TODO: remove List artifacts step and uncomment Publish package to PyPI step above
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
 
   publish-conda-package:
     name: Publish package to Anaconda.org
@@ -121,8 +111,6 @@ jobs:
           meta_yaml_dir: conda
           user: ${{ secrets.ANACONDA_USERNAME }}
           token: ${{ secrets.ANACONDA_TOKEN }}
-          upload: false
-          # TODO: remove upload: false
      
       - uses: actions/upload-artifact@v4
         with:
@@ -138,51 +126,41 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v5
 
-    #   - name: Create Release
-    #     uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 #v2.3.3
-    #     with:
-    #       tag_name: ${{ github.ref_name }}
-    #       name: ${{needs.get-package-name.outputs.package-name}} ${{ github.ref_name }}
-    #       generate_release_notes: true
-    #       fail_on_unmatched_files: true
-    #       files: |
-    #         ${{ env.PYTHON_PACKAGE_ARTIFACT }}/*
-    #         ${{ env.CONDA_PACKAGE_ARTIFACT }}/*
-
-      - name: List artifacts
-        shell: bash -x {0}
+      - name: Create Release
+        uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 #v2.3.3
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{needs.get-package-name.outputs.package-name}} ${{ github.ref_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            ${{ env.PYTHON_PACKAGE_ARTIFACT }}/*
+            ${{ env.CONDA_PACKAGE_ARTIFACT }}/*
+    
+  cleanup-on-failure:
+    name: Cleanup on failure
+    runs-on: ubuntu-latest
+    needs: create-github-release
+    # Run this job if any of the previous jobs failed (and don't skip if any of the needed jobs is skipped)
+    if: ${{ ( always() && failure() ) || cancelled() }}
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+          fetch-depth: 0 
+      
+      # Delete newly created tag
+      - name: Cleanup tag
         run: |
-          ls -R
-          ls -l ${{ steps.download-artifact.outputs.download-path }}
-    
-      # TODO: remove List artifacts step and uncomment Create Release step above
-    
-#   cleanup-on-failure:
-#     name: Cleanup on failure
-#     runs-on: ubuntu-latest
-#     needs: create-github-release
-#     # Run this job if any of the previous jobs failed (and don't skip if any of the needed jobs is skipped)
-#     if: ${{ ( always() && failure() ) || cancelled() }}
-#     permissions:
-#       contents: write
-#     env:
-#       GH_TOKEN: ${{ github.token }}
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v4
-#         with:
-#           fetch-tags: true
-#           fetch-depth: 0 
+          git push origin ':${{ github.ref }}'
+          echo "A job in the current workflow failed. Tag '${{ github.ref }}' was deleted."
       
-#       # Delete newly created tag
-#       - name: Cleanup tag
-#         run: |
-#           git push origin ':${{ github.ref }}'
-#           echo "A job in the current workflow failed. Tag '${{ github.ref }}' was deleted."
-      
-#       # Delete newly created GitHub release
-#       - name: Cleanup GitHub release
-#         run: |
-#            gh release delete '${{ github.ref_name }}' && echo "GitHub release was deleted." || echo "No GitHub release '${{ github.ref_name }}' to delete."
-
-# TODO: uncomment cleanup-on-failure job above
+      # Delete newly created GitHub release
+      - name: Cleanup GitHub release
+        run: |
+           gh release delete '${{ github.ref_name }}' && echo "GitHub release was deleted." || echo "No GitHub release '${{ github.ref_name }}' to delete."
