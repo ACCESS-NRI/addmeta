@@ -121,7 +121,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [get-package-name, publish-pypi-package, publish-conda-package]
     steps:
-      - name: Download artifact
+      - name: Download all artifacts
         uses: actions/download-artifact@v5
 
       - name: Create Release
