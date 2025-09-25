@@ -76,8 +76,6 @@ jobs:
     name: Publish package to Anaconda.org
     runs-on: ubuntu-latest
     needs: build_python_wheel
-    outputs:
-      files: ${{ steps.publish-conda-package.outputs.paths }}
     steps:
       - uses: actions/checkout@v4
 

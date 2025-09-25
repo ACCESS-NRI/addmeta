@@ -7,7 +7,7 @@
 {% set is_noarch = pyproject.get('tool', {}).get('wheel', {}).get('universal', "") %}
 
 package:
-    name: {{ project.get('name') }}
+    name: {{ project.get('name') | lower }}
     version: "{{ version }}"
 
 build:
