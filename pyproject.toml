@@ -1,5 +1,5 @@
 [project]
-name = "addmeta"
+name = "addmeta-test11"
 dynamic = ["version"]
 authors = [
     {name = "Aidan Heerdegen", email="aidan.heerdegen@anu.edu.au"},
@@ -48,7 +48,7 @@ namespaces = false
 
 [tool.versioneer]
 VCS = "git"
-style = "pep440"
+style = "pep440-pre"
 versionfile_source = "addmeta/_version.py"
 versionfile_build = "addmeta/_version.py"
 tag_prefix = ""
