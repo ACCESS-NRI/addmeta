@@ -5,7 +5,8 @@ on:
     tags:
       - '**'
 env:
-  BUILD_FOLDER: ${{github.workspace}}/dist
+  PYTHON_PACKAGE_ARTIFACT: python-package
+  CONDA_PACKAGE_ARTIFACT: conda-package
 
 jobs:
   test:
@@ -31,7 +32,7 @@ jobs:
   
   build_python_wheel:
     name: Build Python package
-    runs-on: linux-latest
+    runs-on: ubuntu-latest
     needs: test
     steps:
       - uses: actions/checkout@v5
@@ -47,11 +48,12 @@ jobs:
       - name: Build distributions
         run: |
           git clean -xfd
-          pyproject-build --outdir ${{env.BUILD_FOLDER}}
+          pyproject-build
 
       - uses: actions/upload-artifact@v4
         with:
-          path: ${{env.BUILD_FOLDER}}
+          name: ${{ env.PYTHON_PACKAGE_ARTIFACT }}
+          path: dist/
 
   publish-pypi-package:
     name: Publish package to PyPI
@@ -61,8 +63,12 @@ jobs:
       id-token: write
     steps:
       - name: Download artifact
+        id: download-artifact
         uses: actions/download-artifact@v5
-      
+        with:
+          name: ${{ env.PYTHON_PACKAGE_ARTIFACT }}
+          path: dist/
+
       - name: Publish package to PyPI
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
 
@@ -71,36 +77,51 @@ jobs:
     runs-on: ubuntu-latest
     needs: build_python_wheel
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download artifact
+        id: download-artifact
         uses: actions/download-artifact@v5
+        with:
+          name: ${{ env.PYTHON_PACKAGE_ARTIFACT }}
       
       # We need the tarball path to be used within the conda recipe
       # So, we get its path and set it as environment variable
       - name: Set tarball path env variable
         run: |
-          TAR_PATH=$(find ${{ env.BUILD_FOLDER }} -type f -name "*.tar.gz" | head -n 1)
+          TAR_PATH=$(find ${{ steps.download-artifact.outputs.download-path }} -type f -name "*.tar.gz" | head -n 1)
           echo "TARBALL_PATH=$TAR_PATH" >> $GITHUB_ENV
+          echo $TAR_PATH # TODO: remove this line
 
       - name: Set up micromamba
         uses: mamba-org/setup-micromamba@v2
         with:
+          environment-name: build-env
           create-args: >-
             conda-build
             anaconda-client
+            versioneer
       
       - name: Publish package to Anaconda.org
+        id: publish-conda-package
         uses: ACCESS-NRI/action-build-and-upload-conda-packages@v3.0.0
         with:
-          meta_yaml_dir: conda/meta.yaml
+          meta_yaml_dir: conda
           user: ${{ secrets.ANACONDA_USERNAME }}
           token: ${{ secrets.ANACONDA_TOKEN }}
+     
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.CONDA_PACKAGE_ARTIFACT }}
+          path: |
+            ${{ steps.publish-conda-package.outputs.paths }}
 
   create-github-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
     needs: [get-package-name, publish-pypi-package, publish-conda-package]
     steps:
-      - name: Download artifact
+      - name: Download all artifacts
         uses: actions/download-artifact@v5
 
       - name: Create Release
@@ -111,7 +132,8 @@ jobs:
           generate_release_notes: true
           fail_on_unmatched_files: true
           files: |
-            ${{ env.BUILD_FOLDER }}/*
+            ${{ env.PYTHON_PACKAGE_ARTIFACT }}/*
+            ${{ env.CONDA_PACKAGE_ARTIFACT }}/*
     
   cleanup-on-failure:
     name: Cleanup on failure
