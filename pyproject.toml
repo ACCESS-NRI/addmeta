@@ -1,5 +1,5 @@
 [project]
-name = "addmeta"
+name = "addmeta-test11"
 dynamic = ["version"]
 authors = [
     {name = "Aidan Heerdegen", email="aidan.heerdegen@anu.edu.au"},
@@ -10,7 +10,8 @@ maintainers = [
     {name = "Aidan Heerdegen", email="aidan.heerdegen@anu.edu.au"},
 ]
 description = "Add meta data to netCDF files."
-license = { file = "LICENSE" }
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 readme = "README.md"
 keywords = ["ACCESS-NRI", "netcdf", "metadata"]
 requires-python = ">=3.9"
@@ -47,7 +48,7 @@ namespaces = false
 
 [tool.versioneer]
 VCS = "git"
-style = "pep440"
+style = "pep440-pre"
 versionfile_source = "addmeta/_version.py"
 versionfile_build = "addmeta/_version.py"
 tag_prefix = ""
