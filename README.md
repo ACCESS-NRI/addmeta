@@ -40,6 +40,16 @@ specified. If the same attribute is defined more than once, the last attribute
 file specified takes precedence. Like cascading style sheets this means default
 values can be given and overridden when necessary. 
 
+### metadata.yaml support
+
+ACCESS-NRI models produce, and intake catalogues consume, a `metadata.yaml` file
+that is a series of key/value pairs (see 
+[schema](https://github.com/ACCESS-NRI/schema/tree/main/au.org.access-nri/model/output/experiment-metadata) 
+for details).
+
+Simple key/value pairs are supported by `addmeta` and are assumed to define global
+metadata.
+
 
 ## Invocation
 

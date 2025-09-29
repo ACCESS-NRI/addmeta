@@ -33,6 +33,16 @@ def read_yaml(fname):
     except Exception as e:
         print("Error loading {file}\n{error}".format(file=fname, error=e))
 
+    # Check if this appears to be a plain key/value yaml file rather
+    # than a structured file with 'global' and 'variables' keywords
+    assume_global = True
+    for key in ["variables", "global"]:
+        if key in metadict and isinstance(metadict[key], dict):
+            assume_global = False
+            
+    if assume_global:
+        metadict = {"global": metadict}
+
     return metadict
 
 def combine_meta(fnames):
