@@ -47,7 +47,7 @@ that is a series of key/value pairs (see
 [schema](https://github.com/ACCESS-NRI/schema/tree/main/au.org.access-nri/model/output/experiment-metadata) 
 for details).
 
-Simple key/value pairs are supported by `addmeta` and are assume to define global
+Simple key/value pairs are supported by `addmeta` and are assumed to define global
 metadata.
 
 
