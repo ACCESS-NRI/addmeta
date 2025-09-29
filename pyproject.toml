@@ -10,7 +10,8 @@ maintainers = [
     {name = "Aidan Heerdegen", email="aidan.heerdegen@anu.edu.au"},
 ]
 description = "Add meta data to netCDF files."
-license = { file = "LICENSE" }
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 readme = "README.md"
 keywords = ["ACCESS-NRI", "netcdf", "metadata"]
 requires-python = ">=3.9"
