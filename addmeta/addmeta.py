@@ -67,7 +67,7 @@ def add_meta(ncfile, metadict):
     Add meta data from a dictionary to a netCDF file
     """
 
-    # Generate some template variables that from the 
+    # Generate some template variables from the 
     # file being processed
     template_vars = {}
 
