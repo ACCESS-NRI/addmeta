@@ -37,7 +37,7 @@ def read_yaml(fname):
     # than a structured file with 'global' and 'variables' keywords
     assume_global = True
     for key in ["variables", "global"]:
-        if key in metadict and isinstance(metadict[key],dict):
+        if key in metadict and isinstance(metadict[key], dict):
             assume_global = False
             
     if assume_global:
