@@ -1,3 +1,8 @@
 global:
     Publisher: "ARC Centre of Excellence for Climate System Science"
     Year: 2017
+    # Note the following two are to test that there can be key/variable
+    # pairs using the two reserved names as long as they're not a dictionary
+    variables: "temp, salt, salinity"
+    global: "yes"
+

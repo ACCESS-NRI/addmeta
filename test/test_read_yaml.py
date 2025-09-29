@@ -62,7 +62,14 @@ def test_read_yaml():
 
     dict1 = read_yaml("test/meta1.yaml")
 
-    assert(dict1 == {'global': {'Publisher': 'ARC Centre of Excellence for Climate System Science', 'Year': 2017}})
+    assert(dict1 == {
+        'global': {
+            'Publisher': 'ARC Centre of Excellence for Climate System Science', 
+            'Year': 2017,
+            'variables': 'temp, salt, salinity', 
+            'global': "yes"
+            }
+        })
 
     dict2 = read_yaml("test/meta2.yaml")
 
@@ -72,18 +79,33 @@ def test_read_yaml():
 
     dict_merge(dictcombined,dict1)
 
-    assert(dictcombined == {'global': {'Publisher': 'ARC Centre of Excellence for Climate System Science', 'Year': 2017, 'Credit': 'NCI'}})
+    assert(dictcombined == {
+        'global': {
+            'Publisher': 'ARC Centre of Excellence for Climate System Science', 
+            'Year': 2017,
+            'variables': 'temp, salt, salinity', 
+            'Credit': 'NCI',
+            'global': "yes"
+            }
+        })
 
-    dictcombined = {}
-    dictcombined = combine_meta(('test/meta2.yaml','test/meta1.yaml'))
+    dictcombined_read = combine_meta(('test/meta2.yaml','test/meta1.yaml'))
 
-    assert(dictcombined == {'global': {'Publisher': 'ARC Centre of Excellence for Climate System Science', 'Year': 2017, 'Credit': 'NCI'}})
+    assert(dictcombined_read == dictcombined)
 
     # Unfortunately when yaml files are concatenated, subsequent values overwrite
     # previous entries, so this is equivalent to dict2
     dictcat = read_yaml("test/meta12.yaml")
 
     assert(dictcat == dict2)
+
+def test_noglobal():
+    if verbose:  print("\nIn test_noglobal")
+
+    dict1 = read_yaml("test/meta1.yaml")
+    dict2 = read_yaml("test/meta1_noglobal.yaml")
+
+    assert(dict1 == dict2)
 
 def test_metadata():
 
