@@ -109,7 +109,7 @@ def set_attribute(group, attribute, value, template_vars):
     else:
         # Only valid to use jinja templates on strings
         if isinstance(value, str):
-            value = Template(value).render(**template_vars)
+            value = Template(value).render(template_vars)
         group.setncattr(attribute, value)
 
 def find_and_add_meta(ncfiles, metafiles):
