@@ -37,21 +37,14 @@ verbose = True
 def runcmd(cmd):
     subprocess.check_call(shlex.split(cmd),stderr=subprocess.STDOUT)
 
+@pytest.fixture
 def make_nc():
-    cmd = "ncgen -o test/test.nc test/test.cdl"
+    ncfilename = 'test/test.nc'
+    cmd = f"ncgen -o {ncfilename} test/test.cdl"
     runcmd(cmd)
-
-def delete_nc():
+    yield ncfilename
     cmd = "rm test/test.nc"
     runcmd(cmd)
-
-def setup_module(module):
-    if verbose: print ("setup_module      module:%s" % module.__name__)
-    make_nc()
- 
-def teardown_module(module):
-    if verbose: print ("teardown_module   module:%s" % module.__name__)
-    delete_nc()
 
 def get_meta_data_from_file(fname, var=None):
 
@@ -83,8 +76,7 @@ def test_read_templated_yaml():
         }
     )
            
-def test_add_templated_meta():
-
+def test_add_templated_meta(make_nc):
     
     dict1 = read_yaml("test/meta_template.yaml")
 
@@ -109,3 +101,16 @@ def test_add_templated_meta():
     assert(dict2["size"] == size_before)
     assert(dict2["modification_time"] == mtime_before)
 
+def test_undefined_meta(make_nc):
+
+    dict1 = read_yaml("test/meta_undefined.yaml")
+
+    ncfile = 'test/test.nc'
+
+    # Missing template variable should throw a warning
+    with pytest.warns(UserWarning, match="Skip setting attribute 'foo': 'bar' is undefined"):
+        add_meta(ncfile, dict1)
+
+    # Attribute using missing template variable should not be present in output file
+    dict2 = get_meta_data_from_file(ncfile)
+    assert( not 'foo' in dict2 )

@@ -6,8 +6,9 @@ from __future__ import print_function
 from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
+from warnings import warn
 
-from jinja2 import Template
+from jinja2 import Template, StrictUndefined, UndefinedError
 import netCDF4 as nc
 import yaml
 
@@ -109,7 +110,12 @@ def set_attribute(group, attribute, value, template_vars):
     else:
         # Only valid to use jinja templates on strings
         if isinstance(value, str):
-            value = Template(value).render(template_vars)
+            try:
+                value = Template(value, undefined=StrictUndefined).render(template_vars)
+            except UndefinedError as e:
+                warn(f"Skip setting attribute '{attribute}': {e}")
+                return
+
         group.setncattr(attribute, value)
 
 def find_and_add_meta(ncfiles, metafiles):
