@@ -30,7 +30,6 @@ import subprocess
 import shlex
 import copy
 import netCDF4 as nc
-import six
 
 from pathlib import Path
 
@@ -145,9 +144,9 @@ def get_meta_data_from_file(fname,var=None):
 
 def dict1_in_dict2(dict1, dict2):
 
-    for k,v in six.iteritems(dict1):
+    for k,v in dict1.items():
         if k in dict2:
-            if dict1[k] != dict2[k]:
+            if v != dict2[k]:
                 return False
         else:
             return False

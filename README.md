@@ -50,10 +50,40 @@ for details).
 Simple key/value pairs are supported by `addmeta` and are assumed to define global
 metadata.
 
+### Dynamic templating
+
+`addmeta` supports limited dynamic templating to allow injection of file specific
+metadata in a general way. This is done using 
+[Jinja templating](https://jinja.palletsprojects.com/en/stable/) and providing a
+number of pre-populated variables:
+
+|variable| description|
+|----|----|
+|`mtime`|Last modification time|
+|`size`|File size (in bytes)|
+|`parent`|Parent directory of the netCDF file|
+|`name`|Filename of the netCDF file|
+|`fullpath`|Full path of the netCDF file|
+
+These variables can be used in a metadata file like so:
+
+```yaml
+global:
+    Publisher: "ACCESS-NRI"
+    directory: "{{ parent }}"
+    Year: 2025
+    filename: "{{ name }}"
+    size: "{{ size }}"
+    modification_time: "{{ mtime }}"
+```
+
+> [!CAUTION]
+> Jinja template variables **must be quoted** and as a consequence all are saved
+> as string attributes in the netCDF variable
 
 ## Invocation
 
-`addmeta` is a command line program. Invoking with the `-h` flag prints
+`addmeta` provides a command line interface. Invoking with the `-h` flag prints
 a summay of how to invoke the program correctly.
 
     $ addmeta -h
