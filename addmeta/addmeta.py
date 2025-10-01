@@ -3,9 +3,11 @@
 from __future__ import print_function
 
 
+from collections import defaultdict
 from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
+import re
 from warnings import warn
 
 from jinja2 import Template, StrictUndefined, UndefinedError
@@ -99,6 +101,20 @@ def add_meta(ncfile, metadict):
 
     rootgrp.close()
 
+def match_filename_regex(filename, regexs):
+    """
+    Match a series of regexs against the filename and return a dict
+    of jinja template variables
+    """
+    vars = {}
+
+    for regex in regexs:
+        match = re.search(regex, filename)
+        if match:
+            vars.update(match.groupdict())
+
+    return vars
+
 def set_attribute(group, attribute, value, template_vars):
     """
     Small wrapper to select to delete or set attribute depending 
@@ -118,16 +134,21 @@ def set_attribute(group, attribute, value, template_vars):
 
         group.setncattr(attribute, value)
 
-def find_and_add_meta(ncfiles, metafiles):
+def find_and_add_meta(ncfiles, metadata, fnregexs):
     """
     Add meta data from 1 or more yaml formatted files to one or more
     netCDF files
     """
 
-    metadata = combine_meta(metafiles)
-
     for fname in ncfiles:
-        add_meta(fname, metadata)
+        fnmetadata  = defaultdict(dict)
+        # Match supplied regex against filename and add metadata
+        fnmetadata['global'] = match_filename_regex(fname, fnregexs)
+
+        for k,v in metadata.items():
+            fnmetadata[k].update(metadata[k])
+
+        add_meta(fname, fnmetadata)
         
 def skip_comments(file):
     """Skip lines that begin with a comment character (#) or are empty

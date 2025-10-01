@@ -31,6 +31,7 @@ def parse_args(args):
 
     parser.add_argument("-m","--metafiles", help="One or more meta-data files in YAML format", action='append')
     parser.add_argument("-l","--metalist", help="File containing a list of meta-data files", action='append')
+    parser.add_argument("-f","--fn-regex", help="Extract metadata from filename using regex", action='append')
     parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
     parser.add_argument("files", help="netCDF files", nargs='+')
 
@@ -52,7 +53,7 @@ def main(args):
 
     if verbose: print("metafiles: "," ".join([str(f) for f in metafiles]))
 
-    addmeta.find_and_add_meta(args.files, metafiles)
+    addmeta.find_and_add_meta(args.files, combine_meta(metafiles), args.fnregex)
 
 def main_parse_args(args):
     """

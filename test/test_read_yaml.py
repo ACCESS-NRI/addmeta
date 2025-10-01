@@ -174,12 +174,12 @@ def test_find_add_meta():
 
     delete_nc()
     make_nc()
-    find_and_add_meta( [ncfile], ['test/meta2.yaml','test/meta1.yaml'])
+    find_and_add_meta( [ncfile], combine_meta(['test/meta2.yaml','test/meta1.yaml']), {})
 
     dict1 = read_yaml("test/meta1.yaml")
     assert(dict1_in_dict2(dict1["global"], get_meta_data_from_file(ncfile)))
 
-    find_and_add_meta( [ncfile], ['test/meta_var1.yaml'] )
+    find_and_add_meta( [ncfile], combine_meta(['test/meta_var1.yaml']), {} )
 
     dict1 = read_yaml("test/meta_var1.yaml")
 
@@ -201,7 +201,7 @@ def test_del_attributes():
     assert( '_FillValue' in attributes )
     assert( 'Tiddly' not in attributes )
 
-    find_and_add_meta( [ncfile], ['test/meta_del.yaml'])
+    find_and_add_meta( [ncfile], combine_meta(['test/meta_del.yaml']), {})
 
     attributes = get_meta_data_from_file(ncfile)
     assert( 'unlikelytobeoverwritten' not in attributes )

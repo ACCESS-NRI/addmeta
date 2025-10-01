@@ -114,3 +114,110 @@ def test_undefined_meta(make_nc):
     # Attribute using missing template variable should not be present in output file
     dict2 = get_meta_data_from_file(ncfile)
     assert( not 'foo' in dict2 )
+
+@pytest.mark.parametrize(
+    "ncfiles,metadata,fnregexs,expected",
+    [
+        pytest.param(
+            [
+                'access-om3.mom6.3d.temp.1day.mean.1900-01.nc', 
+                'access-om3.cice.3d.salt.1mon.mean.1900-01.nc',
+            ],
+            {'global': {
+                'Year': 2025,
+                'unlikelytobeoverwritten': None,
+                'Publisher': 'ACCESS-NRI',
+                }, 
+            },
+            [
+                r'.*access-om3\.(?P<model>.*?)\.\dd\..*?\..*',
+                r'.*\.(?P<frequency>.*)\..*?\.\d+-\d+\.nc$',
+            ],
+            [
+                {
+                    'Year': 2025, 
+                    'frequency': '1day',
+                    'model': 'mom6',
+                    'Publisher': 'ACCESS-NRI',
+                },
+                {
+                    'Year': 2025, 
+                    'frequency': '1mon',
+                    'model': 'cice',
+                    'Publisher': 'ACCESS-NRI',
+                },
+            ],
+            id="access-om3" 
+        ),
+        pytest.param(
+            [
+                'ocean-3d-diff_cbt_wave-1yearly-mean-ym_0792_07.nc',
+                'iceh-1monthly-mean_1181-03.nc',
+            ],
+            {'global': {
+                'Year': 2025,
+                'unlikelytobeoverwritten': None,
+                'Publisher': 'ACCESS-NRI',
+                }, 
+            },
+            [
+                r'.*ocean-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-\S\S_\d+_\d+\.nc$',
+                r'.*iceh-(?P<frequency>\d.*?)-(?P<reduction>.*?)_\d{4}-\d{2}+\.nc$',
+            ],
+            [
+                {
+                    'Year': 2025, 
+                    'frequency': '1yearly',
+                    'variable': 'diff_cbt_wave',
+                    'reduction': 'mean',
+                    'Publisher': 'ACCESS-NRI',
+                },
+                {
+                    'Year': 2025, 
+                    'frequency': '1monthly',
+                    'reduction': 'mean',
+                    'Publisher': 'ACCESS-NRI',
+                },
+            ],
+            id="access-esm1.6.mom5.cice" 
+        ),
+        pytest.param(
+            [
+                'aiihca.pe-118104_dai.nc',
+                'aiihca.pa-118106_mon.nc',
+            ],
+            {
+                'global': 
+                {
+                    'Year': 2025,
+                    'unlikelytobeoverwritten': None,
+                    'Publisher': 'ACCESS-NRI',
+                }, 
+            },
+            [
+                r'^.*?\..*?-\d{6}_(?P<frequency>.*?).nc$',
+                r'^.*?\..*?-\d{6}_(?P<frequency>.*?).nc$',
+            ],
+            [
+                {'Year': 2025, 'Publisher': 'ACCESS-NRI', 'frequency': 'dai' },
+                {'Year': 2025, 'Publisher': 'ACCESS-NRI', 'frequency': 'mon' },
+            ],
+            id="access-esm1p6.um" 
+        ),
+    ]
+)
+def test_find_add_filename_metadata(make_nc, ncfiles, metadata, fnregexs, expected):
+    
+    # Make paths relative to test directory and make copy
+    # of test.nc for each filename
+    ncfiles = [str('test' / Path(file)) for file in ncfiles]
+    for file in ncfiles:
+        runcmd(f'cp test/test.nc {file}')
+
+    # Add metadata extracted from filename
+    find_and_add_meta(ncfiles, metadata, fnregexs)
+
+    for (file, expectation) in zip(ncfiles, expected):
+        assert expectation == get_meta_data_from_file(file)
+        # Clean-up
+        runcmd(f'rm {file}')
