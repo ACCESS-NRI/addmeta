@@ -130,7 +130,7 @@ def test_undefined_meta(make_nc):
                 }, 
             },
             [
-                r'.*access-om3\.(?P<model>.*?)\.\dd\..*?\..*',
+                r'.*access-om3\.(?P<model>.*?)\.', #\dd\..*?\..*',
                 r'.*\.(?P<frequency>.*)\..*?\.\d+-\d+\.nc$',
             ],
             [
