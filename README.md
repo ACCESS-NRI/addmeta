@@ -81,26 +81,58 @@ global:
 > Jinja template variables **must be quoted** and as a consequence all are saved
 > as string attributes in the netCDF variable
 
+### Filename based dynamic templating
+
+Often important file level properties are encoded in filenames. This is not an optimal
+solution, but comes about because it is not possible to alter the model code to inject
+the metadata directly into the output files.
+
+`addmeta` supports extracting this information and embedding it dynamically as an extension
+to dynamic templating.
+
+Extracting the variable is done by specifying [python regular expressions with named
+groups](https://docs.python.org/3/howto/regex.html#non-capturing-and-named-groups), 
+and the group names become the metadata template variables.  e.g.
+
+For the filename
+```bash
+access-om3.mom6.3d.agessc.1day.mean.1900-01.nc'
+```
+the following regex:
+```python
+r'.*\.(?P<frequency>.*)\.mean\.\d+-\d+\.nc$'
+```
+would match and set `frequency=1day`. It is possible to define more than one named
+group in a regex, as long as the names are unique. It is also possible to specify multiple
+regex expressions, only those that match will return variables that can be used as 
+jinja template variables. Unused variables are ignore, and in the case of identical
+named groups in different regexs, later defined regexs override previous ones.
+
 ## Invocation
 
 `addmeta` provides a command line interface. Invoking with the `-h` flag prints
 a summay of how to invoke the program correctly.
 
     $ addmeta -h
-    usage: addmeta [-h] [-m METAFILES] [-l METALIST] [-v] files [files ...]
+    usage: cli.py [-h] [-c CMDLINEARGS] [-m METAFILES] [-l METALIST] [-f FN_REGEX] [-v] files [files ...]
 
     Add meta data to one or more netCDF files
 
     positional arguments:
     files                 netCDF files
 
-    optional arguments:
+    options:
     -h, --help            show this help message and exit
+    -c CMDLINEARGS, --cmdlineargs CMDLINEARGS
+                            File containing a list of command-line arguments
     -m METAFILES, --metafiles METAFILES
                             One or more meta-data files in YAML format
     -l METALIST, --metalist METALIST
                             File containing a list of meta-data files
+    -f FN_REGEX, --fn-regex FN_REGEX
+                            Extract metadata from filename using regex
     -v, --verbose         Verbose output
+
 
 Multiple attribute files can be specified by passing more than one file with
 the `-m` option. For a large number of files this can be tedious. In that case
@@ -109,3 +141,27 @@ one per line.
 
 Multiple meta list files and meta files can be specified on one command line.
 
+To support scriptable invocation command line arguments can be saved into a 
+file and consumed with `-c <filename>`. A good practice is to have a command line
+argument per line, to make it easy to read, and a `diff` of isolates the change.
+Whitespace and comments are stripped, so it is also possible to add useful comments.
+e.g.
+```bash
+# Re-use experiment level metadata
+-m=../metadata.yaml
+# Ocean model specific global metadata
+-m=meta_ocean_global.yaml
+# Ocean model specific variable metadata
+-m=meta_ocean_variable.yaml
+# Extract frequency from filename 
+--fn-regex="r'.*\.(?P<frequency>.*)\.mean\.\d+-\d+\.nc$'"
+# Apply to all ocean data in output subdirectory
+output/ocean_*.nc
+```
+
+> [!CAUTION]
+> The python [argparse library](https://docs.python.org/3/library/argparse.html) 
+> does not allow mixing of command line options and positional arguments. So
+> all the references to netCDF files need to come at the end of the argument
+> list. Effectively this means if the `-c` option is used and netCDF files are
+> specified therein they cannot also be specified on the command line itself.
