@@ -28,7 +28,7 @@ import pytest
 import netCDF4 as nc
 
 from addmeta import read_yaml, dict_merge, combine_meta, add_meta, find_and_add_meta, skip_comments, list_from_file
-from common import runcmd, make_nc, get_meta_data_from_file
+from common import runcmd, make_nc, get_meta_data_from_file, dict1_in_dict2
 
 verbose = True
 
@@ -105,29 +105,6 @@ def test_list_from_file():
     fname = 'test/metalist'
     filelist = list_from_file(fname)
     assert(filelist == [Path('test/meta1.yaml'), Path('test/meta2.yaml')])
-    
-def get_meta_data_from_file(fname,var=None):
-
-    metadict = {}
-    rootgrp = nc.Dataset(fname, "r")
-    if var is None:
-        metadict = rootgrp.__dict__
-    else:
-        metadict = rootgrp.variables[var].__dict__
-        
-    rootgrp.close()
-    return metadict
-
-def dict1_in_dict2(dict1, dict2):
-
-    for k,v in dict1.items():
-        if k in dict2:
-            if v != dict2[k]:
-                return False
-        else:
-            return False
-
-    return True
            
 def test_add_meta(make_nc):
 
