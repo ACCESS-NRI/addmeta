@@ -22,9 +22,11 @@ import os, sys
 import argparse
 import addmeta
 
-def parse_args(args):
+def parse_args(args, preprocess):
     """
     Parse arguments given as list (args)
+
+    Set preprocess to False to enable reading of cmdlineargs which may have files entries 
     """
 
     parser = argparse.ArgumentParser(description="Add meta data to one or more netCDF files")
@@ -34,7 +36,10 @@ def parse_args(args):
     parser.add_argument("-l","--metalist", help="File containing a list of meta-data files", action='append')
     parser.add_argument("-f","--fn-regex", help="Extract metadata from filename using regex", action='append')
     parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
-    parser.add_argument("files", help="netCDF files", nargs='+')
+    if preprocess:
+        parser.add_argument("files", help="netCDF files", nargs='*')
+    else:
+        parser.add_argument("files", help="netCDF files", nargs='+')
 
     return parser.parse_args(args)
 
@@ -61,14 +66,14 @@ def main_parse_args(args):
     Call main with list of arguments. Callable from tests
     """
 
-    parsed_args = parse_args(args)
+    parsed_args = parse_args(args, preprocess=True)
 
     # Check if a cmdlineargs file has been specified, if so read every line and append
     # to args, re-parse and delete cmdlineargs option
     if (parsed_args.cmdlineargs is not None):
         with open(parsed_args.cmdlineargs, 'r') as file:
             args.extend([line for line in addmeta.skip_comments(file)])
-        parsed_args = parse_args(args)
+        parsed_args = parse_args(args, preprocess=False)
         del parsed_args.cmdlineargs 
 
     # Must return so that check command return value is passed back to calling routine
