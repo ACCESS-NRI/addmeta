@@ -29,6 +29,7 @@ def parse_args(args):
 
     parser = argparse.ArgumentParser(description="Add meta data to one or more netCDF files")
 
+    parser.add_argument("-c","--cmdlineargs", help="File containing a list of command-line arguments", action='store')
     parser.add_argument("-m","--metafiles", help="One or more meta-data files in YAML format", action='append')
     parser.add_argument("-l","--metalist", help="File containing a list of meta-data files", action='append')
     parser.add_argument("-f","--fn-regex", help="Extract metadata from filename using regex", action='append')
@@ -45,7 +46,7 @@ def main(args):
     verbose = args.verbose
 
     if (args.metalist is not None):
-        for listfile in args.metalist:
+        for line in args.metalist:
             metafiles.extend(addmeta.list_from_file(listfile))
 
     if (args.metafiles is not None):
@@ -61,7 +62,18 @@ def main_parse_args(args):
     """
     # Must return so that check command return value is passed back to calling routine
     # otherwise py.test will fail
-    return main(parse_args(args))
+
+    parsed_args = parse_args(args)
+
+    # Check if a cmdlineargs file has been specified, if so read every line and append
+    # to args, re-parse and delete cmdlineargs option
+    if (parsed_args.cmdlineargs is not None):
+        with open(parsed_args.cmdlineargs, 'r') as file:
+            args.extend([line.strip() for line in file.readlines()])
+        parsed_args = parse_args(args)
+        del parsed_args.cmdlineargs 
+
+    return main(parsed_args)
 
 def main_argv():
     """
