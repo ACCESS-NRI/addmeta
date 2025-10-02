@@ -60,8 +60,6 @@ def main_parse_args(args):
     """
     Call main with list of arguments. Callable from tests
     """
-    # Must return so that check command return value is passed back to calling routine
-    # otherwise py.test will fail
 
     parsed_args = parse_args(args)
 
@@ -69,10 +67,12 @@ def main_parse_args(args):
     # to args, re-parse and delete cmdlineargs option
     if (parsed_args.cmdlineargs is not None):
         with open(parsed_args.cmdlineargs, 'r') as file:
-            args.extend([line.strip() for line in file.readlines()])
+            args.extend([line for line in addmeta.skip_comments(file)])
         parsed_args = parse_args(args)
         del parsed_args.cmdlineargs 
 
+    # Must return so that check command return value is passed back to calling routine
+    # otherwise py.test will fail
     return main(parsed_args)
 
 def main_argv():
