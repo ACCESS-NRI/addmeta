@@ -54,7 +54,7 @@ from addmeta import match_filename_regex
         ),
         pytest.param(
             'iceh-1monthly-mean_1181-03.nc',
-            [r'^iceh-(?P<frequency>\d.*?)-(?P<reduction>.*?)_\d{4}-\d{2}+\.nc$'],
+            [r'^iceh-(?P<frequency>\d.*?)-(?P<reduction>.*?)_\d{4}-\d{2}\.nc$'],
             {'frequency': '1monthly', 'reduction': 'mean'},
             id="access-esm1p6.cice5.frequency.reduction.1" 
         ),

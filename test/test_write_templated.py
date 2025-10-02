@@ -162,7 +162,7 @@ def test_undefined_meta(make_nc):
             },
             [
                 r'.*ocean-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-\S\S_\d+_\d+\.nc$',
-                r'.*iceh-(?P<frequency>\d.*?)-(?P<reduction>.*?)_\d{4}-\d{2}+\.nc$',
+                r'.*iceh-(?P<frequency>\d.*?)-(?P<reduction>.*?)_\d{4}-\d{2}\.nc$',
             ],
             [
                 {
