@@ -170,14 +170,15 @@ def test_cmdlinearg_from_file(mock_main):
 
     fname = "test/metacmdlineargs"
 
-    args = ["-c", f"{fname}", f"-m=anotherfile", "datafile.nc"]
+    args = [f"-c={fname}", f"-m=anotherfile"]
 
+    import pdb; pdb.set_trace
     assert addmeta.cli.main_parse_args(args) == True
 
     all_args = Namespace(metafiles=['anotherfile', 'meta1.yaml', 'meta2.yaml'], 
               metalist=None, 
               fn_regex=["'\\d{3]\\.'", "'(?:group\\d{3])\\.nc'"], 
               verbose=False, 
-              files=['datafile.nc'])
+              files=['ocean_*.nc'])
 
     mock_main.assert_called_once_with(all_args)
