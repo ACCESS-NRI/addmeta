@@ -20,41 +20,17 @@ limitations under the License.
 """
 
 
-from __future__ import print_function
-
-import pytest
-import sys
-import os
-import shutil
-import subprocess
-import shlex
 import copy
-import netCDF4 as nc
-
+import os
 from pathlib import Path
 
+import pytest
+import netCDF4 as nc
+
 from addmeta import read_yaml, dict_merge, combine_meta, add_meta, find_and_add_meta, skip_comments, list_from_file
+from common import runcmd, make_nc, get_meta_data_from_file
 
 verbose = True
-
-def runcmd(cmd):
-    subprocess.check_call(shlex.split(cmd),stderr=subprocess.STDOUT)
-
-def make_nc():
-    cmd = "ncgen -o test/test.nc test/test.cdl"
-    runcmd(cmd)
-
-def delete_nc():
-    cmd = "rm test/test.nc"
-    runcmd(cmd)
-
-def setup_module(module):
-    if verbose: print ("setup_module      module:%s" % module.__name__)
-    make_nc()
- 
-def teardown_module(module):
-    if verbose: print ("teardown_module   module:%s" % module.__name__)
-    delete_nc()
 
 def test_read_yaml():
     if verbose:  print("\nIn test_read_yaml")
@@ -153,7 +129,7 @@ def dict1_in_dict2(dict1, dict2):
 
     return True
            
-def test_add_meta():
+def test_add_meta(make_nc):
 
     ncfile = 'test/test.nc'
     
@@ -168,12 +144,10 @@ def test_add_meta():
     for var in dict1["variables"]:
         assert(dict1_in_dict2(dict1["variables"][var], get_meta_data_from_file(ncfile,var)))
 
-def test_find_add_meta():
+def test_find_add_meta(make_nc):
     
     ncfile = 'test/test.nc'
 
-    delete_nc()
-    make_nc()
     find_and_add_meta( [ncfile], combine_meta(['test/meta2.yaml','test/meta1.yaml']), {})
 
     dict1 = read_yaml("test/meta1.yaml")
@@ -186,12 +160,9 @@ def test_find_add_meta():
     for var in dict1["variables"]:
         assert(dict1_in_dict2(dict1["variables"][var], get_meta_data_from_file(ncfile,var)))
 
-def test_del_attributes():
+def test_del_attributes(make_nc):
     
     ncfile = 'test/test.nc'
-
-    delete_nc()
-    make_nc()
 
     attributes = get_meta_data_from_file(ncfile)
     assert( 'unlikelytobeoverwritten' in attributes )

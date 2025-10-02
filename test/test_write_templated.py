@@ -19,46 +19,16 @@ limitations under the License.
 """
 
 from datetime import datetime
-import os
 from pathlib import Path
-import shlex
-import shutil
-import sys
-import subprocess
-import copy
 
 import netCDF4 as nc
 import pytest
 
 from addmeta import read_yaml, dict_merge, combine_meta, add_meta, find_and_add_meta, skip_comments, list_from_file
+from common import runcmd, make_nc, get_meta_data_from_file
 
 verbose = True
 
-def runcmd(cmd):
-    subprocess.check_call(shlex.split(cmd),stderr=subprocess.STDOUT)
-
-@pytest.fixture
-def make_nc():
-    ncfilename = 'test/test.nc'
-    cmd = f"ncgen -o {ncfilename} test/test.cdl"
-    runcmd(cmd)
-    yield ncfilename
-    cmd = "rm test/test.nc"
-    runcmd(cmd)
-
-def get_meta_data_from_file(fname, var=None):
-
-    metadict = {}
-    rootgrp = nc.Dataset(fname, "r")
-    if var is None:
-        metadict = rootgrp.__dict__
-    else:
-        metadict = rootgrp.variables[var].__dict__
-        
-    rootgrp.close()
-
-    return metadict
-           
 def test_read_templated_yaml():
 
     dict1 = read_yaml("test/meta_template.yaml")
