@@ -20,7 +20,7 @@ limitations under the License.
 
 import os, sys
 import argparse
-import addmeta
+from addmeta import find_and_add_meta, combine_meta, list_from_file, skip_comments
 
 def parse_args(args, preprocess):
     """
@@ -34,7 +34,7 @@ def parse_args(args, preprocess):
     parser.add_argument("-c","--cmdlineargs", help="File containing a list of command-line arguments", action='store')
     parser.add_argument("-m","--metafiles", help="One or more meta-data files in YAML format", action='append')
     parser.add_argument("-l","--metalist", help="File containing a list of meta-data files", action='append')
-    parser.add_argument("-f","--fn-regex", help="Extract metadata from filename using regex", action='append')
+    parser.add_argument("-f","--fnregex", help="Extract metadata from filename using regex", action='append')
     parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
     if preprocess:
         parser.add_argument("files", help="netCDF files", nargs='*')
@@ -52,14 +52,14 @@ def main(args):
 
     if (args.metalist is not None):
         for line in args.metalist:
-            metafiles.extend(addmeta.list_from_file(listfile))
+            metafiles.extend(list_from_file(listfile))
 
     if (args.metafiles is not None):
         metafiles.extend(args.metafiles)
 
     if verbose: print("metafiles: "," ".join([str(f) for f in metafiles]))
 
-    addmeta.find_and_add_meta(args.files, combine_meta(metafiles), args.fnregex)
+    find_and_add_meta(args.files, combine_meta(metafiles), args.fnregex)
 
 def main_parse_args(args):
     """
@@ -72,7 +72,7 @@ def main_parse_args(args):
     # to args, re-parse and delete cmdlineargs option
     if (parsed_args.cmdlineargs is not None):
         with open(parsed_args.cmdlineargs, 'r') as file:
-            args.extend([line for line in addmeta.skip_comments(file)])
+            args.extend([line for line in skip_comments(file)])
         parsed_args = parse_args(args, preprocess=False)
         del parsed_args.cmdlineargs 
 

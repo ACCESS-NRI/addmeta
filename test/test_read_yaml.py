@@ -177,7 +177,7 @@ def test_cmdlinearg_from_file(mock_main):
 
     all_args = Namespace(metafiles=['anotherfile', 'meta1.yaml', 'meta2.yaml'], 
               metalist=None, 
-              fn_regex=["'\\d{3]\\.'", "'(?:group\\d{3])\\.nc'"], 
+              fnregex=["'\\d{3]\\.'", "'(?:group\\d{3])\\.nc'"], 
               verbose=False, 
               files=['ocean_*.nc'])
 

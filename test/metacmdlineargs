@@ -5,5 +5,5 @@
 
 -f'\d{3]\.'
 
-   --fn-regex='(?:group\d{3])\.nc'
+   --fnregex='(?:group\d{3])\.nc'
 ocean_*.nc
