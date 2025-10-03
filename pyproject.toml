@@ -18,6 +18,7 @@ requires-python = ">=3.9"
 dependencies = [
     "netcdf4",
     "pyyaml",
+    "Jinja2",
 ]
 
 [project.optional-dependencies]
