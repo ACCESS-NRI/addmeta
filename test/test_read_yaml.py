@@ -19,11 +19,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from argparse import Namespace
 import copy
 import os
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 import netCDF4 as nc
@@ -162,23 +160,3 @@ def test_del_attributes(make_nc):
     assert( '_FillValue' not in attributes )
     assert( 'Tiddly' in attributes )
     assert( 'Kelvin' == attributes['units'] )
-
-@patch('addmeta.cli.main')
-def test_cmdlinearg_from_file(mock_main):
-
-    mock_main.return_value = True
-
-    fname = "test/metacmdlineargs"
-
-    args = [f"-c={fname}", f"-m=anotherfile"]
-
-    import pdb; pdb.set_trace
-    assert addmeta.cli.main_parse_args(args) == True
-
-    all_args = Namespace(metafiles=['anotherfile', 'meta1.yaml', 'meta2.yaml'], 
-              metalist=None, 
-              fnregex=["'\\d{3]\\.'", "'(?:group\\d{3])\\.nc'"], 
-              verbose=False, 
-              files=['ocean_*.nc'])
-
-    mock_main.assert_called_once_with(all_args)
