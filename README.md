@@ -105,7 +105,7 @@ r'.*\.(?P<frequency>.*)\.mean\.\d+-\d+\.nc$'
 would match and set `frequency=1day`. It is possible to define more than one named
 group in a regex, as long as the names are unique. It is also possible to specify multiple
 regex expressions, only those that match will return variables that can be used as 
-jinja template variables. Unused variables are ignore, and in the case of identical
+jinja template variables. Unused variables are ignored, and in the case of identical
 named groups in different regexs, later defined regexs override previous ones.
 
 ## Invocation

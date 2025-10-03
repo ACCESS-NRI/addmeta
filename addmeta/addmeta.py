@@ -117,7 +117,7 @@ def match_filename_regex(filename, regexs):
 
 def set_attribute(group, attribute, value, template_vars):
     """
-    Small wrapper to select to delete or set attribute depending 
+    Small wrapper to select, delete, or set attribute depending 
     on value passed and expand jinja template variables
     """
     if value is None:
