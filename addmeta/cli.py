@@ -18,15 +18,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import os, sys
 import argparse
+from glob import glob
+import os
+import sys
+
 from addmeta import find_and_add_meta, combine_meta, list_from_file, skip_comments
 
-def parse_args(args, preprocess):
+def parse_args(args):
     """
     Parse arguments given as list (args)
-
-    Set preprocess to False to enable reading of cmdlineargs which may have files entries 
     """
 
     parser = argparse.ArgumentParser(description="Add meta data to one or more netCDF files")
@@ -36,12 +37,9 @@ def parse_args(args, preprocess):
     parser.add_argument("-l","--metalist", help="File containing a list of meta-data files", action='append')
     parser.add_argument("-f","--fnregex", help="Extract metadata from filename using regex", action='append')
     parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
-    if preprocess:
-        parser.add_argument("files", help="netCDF files", nargs='*')
-    else:
-        parser.add_argument("files", help="netCDF files", nargs='+')
+    parser.add_argument("files", help="netCDF files", nargs='*')
 
-    return parser.parse_args(args)
+    return (parser, parser.parse_args(args))
 
 def main(args):
     """
@@ -61,21 +59,57 @@ def main(args):
 
     find_and_add_meta(args.files, combine_meta(metafiles), args.fnregex)
 
+def safe_join_lists(list1, list2):
+    """
+    Joins two lists, handling cases where one or both might be None.
+    Returns:
+        A new list containing the combined elements, or None if both are None.
+    """
+    if list1 is None and list2 is None:
+        return None
+    elif list1 is None:
+        return list2
+    elif list2 is None:
+        return list1
+    else:
+        return list1 + list2
+
 def main_parse_args(args):
     """
     Call main with list of arguments. Callable from tests
     """
 
-    parsed_args = parse_args(args, preprocess=True)
+    parser, parsed_args = parse_args(args)
 
-    # Check if a cmdlineargs file has been specified, if so read every line and append
-    # to args, re-parse and delete cmdlineargs option
     if (parsed_args.cmdlineargs is not None):
+        # If a cmdlineargs file has been specified, read every line 
+        # and parse
         with open(parsed_args.cmdlineargs, 'r') as file:
-            args.extend([line for line in skip_comments(file)])
-        parsed_args = parse_args(args, preprocess=False)
-        del parsed_args.cmdlineargs 
+            newargs = [line for line in skip_comments(file)]
+        _, new_parsed_args = parse_args(newargs)
 
+        # Expand (glob) patterns in positional arguments (files)
+        filelist = []
+        for file in new_parsed_args.files:
+            filelist.extend(glob(file))
+        if len(filelist) > 0:
+            new_parsed_args.files = filelist
+
+        # Combine new and existing parsed arguments, ommitting cmdlineargs 
+        # option.  Adding additional command line arguments may require 
+        # adding logic here also
+        parsed_args.files = safe_join_lists(parsed_args.files, new_parsed_args.files)
+        parsed_args.metafiles = safe_join_lists(parsed_args.metafiles, new_parsed_args.metafiles)
+        parsed_args.fnregex = safe_join_lists(parsed_args.fnregex, new_parsed_args.fnregex)
+        parsed_args.verbose = parsed_args.verbose or new_parsed_args.verbose
+        parsed_args.cmdlineargs = None
+
+
+    # Have to manually check positional arguments
+    if len(parsed_args.files) < 1:
+        parser.print_usage()
+        sys.exit('Error: no files specified')
+    
     # Must return so that check command return value is passed back to calling routine
     # otherwise py.test will fail
     return main(parsed_args)
