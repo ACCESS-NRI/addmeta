@@ -18,14 +18,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from pathlib import Path
 import shlex
 import subprocess
 
 import netCDF4 as nc
 import pytest
 
-def runcmd(cmd):
-    subprocess.check_call(shlex.split(cmd),stderr=subprocess.STDOUT)
+def runcmd(cmd, rwd=None):
+    """
+    Run a command, print stderr to stdout and optionally run in working
+    directory relative to the current directory
+    """
+    cwd = Path.cwd()
+    if rwd is not None:
+        cwd = str(cwd / rwd)
+    subprocess.check_call(shlex.split(cmd),stderr=subprocess.STDOUT, cwd=cwd)
 
 @pytest.fixture
 def make_nc():
