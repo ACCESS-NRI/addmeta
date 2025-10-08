@@ -55,7 +55,7 @@ def test_add_templated_meta(make_nc):
     size_before = str(Path(ncfile).stat().st_size)
     mtime_before = datetime.fromtimestamp(Path(ncfile).stat().st_mtime).isoformat()
 
-    add_meta(ncfile, dict1)
+    add_meta(ncfile, dict1, {})
 
     dict2 = get_meta_data_from_file(ncfile)
 
@@ -79,7 +79,7 @@ def test_undefined_meta(make_nc):
 
     # Missing template variable should throw a warning
     with pytest.warns(UserWarning, match="Skip setting attribute 'foo': 'bar' is undefined"):
-        add_meta(ncfile, dict1)
+        add_meta(ncfile, dict1, {})
 
     # Attribute using missing template variable should not be present in output file
     dict2 = get_meta_data_from_file(ncfile)
@@ -97,6 +97,8 @@ def test_undefined_meta(make_nc):
                 'Year': 2025,
                 'unlikelytobeoverwritten': None,
                 'Publisher': 'ACCESS-NRI',
+                'model': '{{ model }}',
+                'frequency': '{{ frequency }}',
                 }, 
             },
             [
@@ -128,6 +130,9 @@ def test_undefined_meta(make_nc):
                 'Year': 2025,
                 'unlikelytobeoverwritten': None,
                 'Publisher': 'ACCESS-NRI',
+                'reduction': '{{ reduction }}',
+                'frequency': '{{ frequency }}',
+                'variable': '{{ variable }}',
                 }, 
             },
             [
@@ -162,6 +167,7 @@ def test_undefined_meta(make_nc):
                     'Year': 2025,
                     'unlikelytobeoverwritten': None,
                     'Publisher': 'ACCESS-NRI',
+                    'frequency': '{{ frequency }}',
                 }, 
             },
             [

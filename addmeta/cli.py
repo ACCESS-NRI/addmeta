@@ -57,7 +57,7 @@ def main(args):
 
     if verbose: print("metafiles: "," ".join([str(f) for f in metafiles]))
 
-    find_and_add_meta(args.files, combine_meta(metafiles), args.fnregex)
+    find_and_add_meta(args.files, combine_meta(metafiles), args.fnregex, verbose)
 
 def safe_join_lists(list1, list2):
     """

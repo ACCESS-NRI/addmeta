@@ -65,14 +65,13 @@ def combine_meta(fnames):
 
     return allmeta
 
-def add_meta(ncfile, metadict):
+def add_meta(ncfile, metadict, template_vars, verbose=False):
     """
     Add meta data from a dictionary to a netCDF file
     """
 
     # Generate some template variables from the 
     # file being processed
-    template_vars = {}
 
     ncpath = Path(ncfile)
     ncpath_stat = ncpath.stat()
@@ -97,11 +96,11 @@ def add_meta(ncfile, metadict):
     # Set global meta data
     if "global" in metadict:
         for attr, value in metadict['global'].items():
-            set_attribute(rootgrp, attr, value, template_vars)
+            set_attribute(rootgrp, attr, value, template_vars, verbose)
 
     rootgrp.close()
 
-def match_filename_regex(filename, regexs):
+def match_filename_regex(filename, regexs, verbose=False):
     """
     Match a series of regexs against the filename and return a dict
     of jinja template variables
@@ -112,10 +111,11 @@ def match_filename_regex(filename, regexs):
         match = re.search(regex, filename)
         if match:
             vars.update(match.groupdict())
+    if verbose: print(f'Matched following filename variables: {vars}')
 
     return vars
 
-def set_attribute(group, attribute, value, template_vars):
+def set_attribute(group, attribute, value, template_vars, verbose=False):
     """
     Small wrapper to select, delete, or set attribute depending 
     on value passed and expand jinja template variables
@@ -131,24 +131,25 @@ def set_attribute(group, attribute, value, template_vars):
             except UndefinedError as e:
                 warn(f"Skip setting attribute '{attribute}': {e}")
                 return
+            finally:
+                if verbose: print(f"{attribute}: {value}")
 
         group.setncattr(attribute, value)
 
-def find_and_add_meta(ncfiles, metadata, fnregexs):
+def find_and_add_meta(ncfiles, metadata, fnregexs, verbose=False):
     """
     Add meta data from 1 or more yaml formatted files to one or more
     netCDF files
     """
 
+    if verbose: print("Processing netCDF files")
     for fname in ncfiles:
-        fnmetadata  = defaultdict(dict)
+        if verbose: print(f"{fname}")
+
         # Match supplied regex against filename and add metadata
-        fnmetadata['global'] = match_filename_regex(fname, fnregexs)
+        template_vars = match_filename_regex(fname, fnregexs, verbose)
 
-        for k,v in metadata.items():
-            fnmetadata[k].update(metadata[k])
-
-        add_meta(fname, fnmetadata)
+        add_meta(fname, metadata, template_vars, verbose)
         
 def skip_comments(file):
     """Skip lines that begin with a comment character (#) or are empty

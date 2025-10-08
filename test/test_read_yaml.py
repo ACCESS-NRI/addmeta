@@ -111,12 +111,12 @@ def test_add_meta(make_nc):
     ncfile = 'test/test.nc'
     
     dict1 = read_yaml("test/meta1.yaml")
-    add_meta(ncfile, dict1)
+    add_meta(ncfile, dict1, {})
 
     assert(dict1_in_dict2(dict1["global"], get_meta_data_from_file(ncfile)))
 
     dict1 = read_yaml("test/meta_var1.yaml")
-    add_meta(ncfile, dict1)
+    add_meta(ncfile, dict1, {})
 
     for var in dict1["variables"]:
         assert(dict1_in_dict2(dict1["variables"][var], get_meta_data_from_file(ncfile,var)))
