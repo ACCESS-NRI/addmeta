@@ -1,0 +1,12 @@
+global:
+    help: "I need somebody"
+    model_version: "2.1"
+    date_created: "{{ mtime }}" 
+    realm: "ocean"
+    frequency: "{{ frequency }}"
+    notes: 
+    description: 
+    created:
+    keywords:
+    unlikelytobeoverwritten:
+

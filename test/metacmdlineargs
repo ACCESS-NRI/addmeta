@@ -1,0 +1,9 @@
+# This is a comment
+-m=meta1.yaml
+
+   --metafiles=meta2.yaml
+
+-f'\d{3]\.'
+
+   --fnregex='(?:group\d{3])\.nc'
+ocean_*.nc
