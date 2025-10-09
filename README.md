@@ -154,14 +154,16 @@ e.g.
 # Ocean model specific variable metadata
 -m=meta_ocean_variable.yaml
 # Extract frequency from filename 
---fn-regex="r'.*\.(?P<frequency>.*)\.mean\.\d+-\d+\.nc$'"
+--fn-regex=.*\.(?P<frequency>.*)\.mean\.\d+-\d+\.nc$
 # Apply to all ocean data in output subdirectory
 output/ocean_*.nc
 ```
 
 > [!CAUTION]
+> Do not quote regex strings in a command file as above. String quoting is still
+> required when used on the command line.
+>
 > The python [argparse library](https://docs.python.org/3/library/argparse.html) 
 > does not allow mixing of command line options and positional arguments. So
 > all the references to netCDF files need to come at the end of the argument
-> list. Effectively this means if the `-c` option is used and netCDF files are
-> specified therein they cannot also be specified on the command line itself.
+> list. 
