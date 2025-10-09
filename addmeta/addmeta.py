@@ -111,7 +111,7 @@ def match_filename_regex(filename, regexs, verbose=False):
         match = re.search(regex, filename)
         if match:
             vars.update(match.groupdict())
-    if verbose: print(f'Matched following filename variables: {vars}')
+    if verbose: print(f'    Matched following filename variables: {vars}')
 
     return vars
 
@@ -122,7 +122,13 @@ def set_attribute(group, attribute, value, template_vars, verbose=False):
     """
     if value is None:
         if attribute in group.__dict__:
-            group.delncattr(attribute)
+            try:
+                group.delncattr(attribute)
+            except UndefinedError as e:
+                warn(f"Could not delete attribute '{attribute}': {e}")
+                return
+            finally:
+                if verbose: print(f"      - {attribute}")
     else:
         # Only valid to use jinja templates on strings
         if isinstance(value, str):
@@ -132,7 +138,7 @@ def set_attribute(group, attribute, value, template_vars, verbose=False):
                 warn(f"Skip setting attribute '{attribute}': {e}")
                 return
             finally:
-                if verbose: print(f"{attribute}: {value}")
+                if verbose: print(f"      + {attribute}: {value}")
 
         group.setncattr(attribute, value)
 
@@ -142,9 +148,9 @@ def find_and_add_meta(ncfiles, metadata, fnregexs, verbose=False):
     netCDF files
     """
 
-    if verbose: print("Processing netCDF files")
+    if verbose: print("Processing netCDF files:")
     for fname in ncfiles:
-        if verbose: print(f"{fname}")
+        if verbose: print(f"  {fname}")
 
         # Match supplied regex against filename and add metadata
         template_vars = match_filename_regex(fname, fnregexs, verbose)
