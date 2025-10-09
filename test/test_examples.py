@@ -45,7 +45,6 @@ def make_nc():
             {
              'ocean-2d-wind_power_u-1monthly-mean-ym_0792_01.nc': 
              {
-                'unlikelytobeoverwritten': 'total rubbish', 
                 'Publisher': 'Will be overwritten', 
                 'contact': 'Add your name here', 
                 'email': 'Add your email address here', 
@@ -61,7 +60,6 @@ def make_nc():
                 'frequency': '1monthly'
              },
              'ocean-3d-power_diss_drag-1yearly-mean-ym_0792_07.nc': {
-                'unlikelytobeoverwritten': 'total rubbish', 
                 'Publisher': 'Will be overwritten', 
                 'contact': 'Add your name here', 
                 'email': 'Add your email address here',
@@ -78,7 +76,6 @@ def make_nc():
              },
              'oceanbgc-3d-zprod_gross-1monthly-mean-ym_0792_01.nc':
              {
-                'unlikelytobeoverwritten': "total rubbish",
 		        'Publisher': "Will be overwritten",
 		        'contact': "Add your name here" ,
                 'email': "Add your email address here" ,
