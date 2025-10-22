@@ -61,7 +61,7 @@ import netCDF4
 )
 def test_sort(initial, expected):
     with netCDF4.Dataset('test.nc', 'w', diskless=True) as ds:
-        ds.setncattrs(initial)
+        ds.setncatts(initial)
 
         assert ds.ncattrs() == initial.keys()
 
