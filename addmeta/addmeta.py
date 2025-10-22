@@ -3,7 +3,7 @@
 from __future__ import print_function
 
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
@@ -65,7 +65,7 @@ def combine_meta(fnames):
 
     return allmeta
 
-def add_meta(ncfile, metadict, template_vars, verbose=False):
+def add_meta(ncfile, metadict, template_vars, sort_attrs=False, verbose=False):
     """
     Add meta data from a dictionary to a netCDF file
     """
@@ -97,6 +97,10 @@ def add_meta(ncfile, metadict, template_vars, verbose=False):
     if "global" in metadict:
         for attr, value in metadict['global'].items():
             set_attribute(rootgrp, attr, value, template_vars, verbose)
+
+    # Sort the global attributes
+    if sort_attrs:
+        sort_attributes(rootgrp)
 
     rootgrp.close()
 
@@ -142,7 +146,7 @@ def set_attribute(group, attribute, value, template_vars, verbose=False):
 
         group.setncattr(attribute, value)
 
-def find_and_add_meta(ncfiles, metadata, fnregexs, verbose=False):
+def find_and_add_meta(ncfiles, metadata, fnregexs, sort_attrs=False, verbose=False):
     """
     Add meta data from 1 or more yaml formatted files to one or more
     netCDF files
@@ -155,7 +159,7 @@ def find_and_add_meta(ncfiles, metadata, fnregexs, verbose=False):
         # Match supplied regex against filename and add metadata
         template_vars = match_filename_regex(fname, fnregexs, verbose)
 
-        add_meta(fname, metadata, template_vars, verbose)
+        add_meta(fname, metadata, template_vars, sort_attrs=sort_attrs, verbose=verbose)
         
 def skip_comments(file):
     """Skip lines that begin with a comment character (#) or are empty
@@ -170,3 +174,21 @@ def list_from_file(fname):
         filelist = [Path(fname).parent / file for file in skip_comments(f)]
 
     return filelist
+
+def sort_attributes(group):
+    """
+    Sort the attributes of the given group lexicographically, ignoring case.
+    FIXME: Currently order of attrs will not update if none are added or removed elsewhere
+    """
+    # Get the sorted attributes - use str.casefold to ignore case
+    attrs_dict = OrderedDict()
+    for attr in sorted(group.ncattrs(), key=str.casefold):
+        attrs_dict[attr] = group.getncattr(attr)
+
+    # Remove all the attributes
+    for attr in group.ncattrs():
+        group.delncattr(attr)
+
+    # Add the sorted attributes back on
+    for attr, value in attrs_dict.items():
+        group.setncattr(attr, value)
