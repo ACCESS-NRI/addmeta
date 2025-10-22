@@ -34,8 +34,8 @@ import netCDF4
                 '_z': 'underscored keyname',
             },
             {
-                '_z': 'underscored keyname',
                 '1': 'one',
+                '_z': 'underscored keyname',
                 'a': 'a',
                 'b': 'b',
                 'z': 'z',
