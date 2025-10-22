@@ -27,8 +27,8 @@ import netCDF4
     [
         pytest.param(
             {
-		        'Publisher': "Will be overwritten",
-		        'contact': "Add your name here" ,
+                'Publisher': "Will be overwritten",
+                'contact': "Add your name here" ,
                 'email': "Add your email address here" ,
                 'realm': "ocean" ,
                 'nominal_resolution': "100 km" ,
@@ -42,11 +42,11 @@ import netCDF4
                 'frequency': "1monthly" ,
              },
              {
-		        'contact': "Add your name here" ,
+                'contact': "Add your name here" ,
                 'email': "Add your email address here" ,
                 'frequency': "1monthly" ,
                 'help': "I need somebody" ,
-		        'license': "CC-BY-4.0" ,
+                'license': "CC-BY-4.0" ,
                 'nominal_resolution': "100 km" ,
                 'model': "ACCESS-ESM1.6" ,
                 'model_version': "2.1" ,
@@ -63,8 +63,8 @@ def test_sort(initial, expected):
     with netCDF4.Dataset('test.nc', 'w', diskless=True) as ds:
         ds.setncattrs(initial)
 
-        assert ds.ncattrs == initial.keys()
+        assert ds.ncattrs() == initial.keys()
 
         sort_attributes(ds)
 
-        assert ds.ncattrs == expected.keys()
+        assert ds.ncattrs() == expected.keys()
