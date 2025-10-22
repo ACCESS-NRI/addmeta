@@ -63,8 +63,8 @@ def test_sort(initial, expected):
     with netCDF4.Dataset('test.nc', 'w', diskless=True) as ds:
         ds.setncatts(initial)
 
-        assert ds.ncattrs() == initial.keys()
+        assert ds.ncattrs() == list(initial.keys())
 
         sort_attributes(ds)
 
-        assert ds.ncattrs() == expected.keys()
+        assert ds.ncattrs() == list(expected.keys())
