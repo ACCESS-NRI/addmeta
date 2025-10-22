@@ -55,6 +55,7 @@ def test_cmdlinearg_from_file(mock_main, touch_nc):
               cmdlineargs=None, 
               fnregex=["'\\d{3]\\.'", "'(?:group\\d{3])\\.nc'"], 
               verbose=False, 
+              sort=False,
               files=touch_nc[0:2])
 
     mock_main.assert_called_once_with(all_args)
