@@ -27,6 +27,22 @@ import netCDF4
     [
         pytest.param(
             {
+                'b': 'b',
+                'a': 'a',
+                '1': 'one',
+                'z': 'z',
+                '_z': 'underscored keyname',
+            },
+            {
+                '_z': 'underscored keyname',
+                '1': 'one',
+                'a': 'a',
+                'b': 'b',
+                'z': 'z',
+            }
+        ),
+        pytest.param(
+            {
                 'Publisher': "Will be overwritten",
                 'contact': "Add your name here" ,
                 'email': "Add your email address here" ,
@@ -47,14 +63,14 @@ import netCDF4
                 'frequency': "1monthly" ,
                 'help': "I need somebody" ,
                 'license': "CC-BY-4.0" ,
-                'nominal_resolution': "100 km" ,
                 'model': "ACCESS-ESM1.6" ,
                 'model_version': "2.1" ,
+                'nominal_resolution': "100 km" ,
                 'Publisher': "Will be overwritten",
                 'realm': "ocean" ,
                 'reference': "https://doi.org/10.1071/ES19035" ,
-                'version': "1.1" ,
                 'url': "https://github.com/ACCESS-NRI/access-esm1.5-configs.git" ,
+                'version': "1.1" ,
              }
         )
     ]
