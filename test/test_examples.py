@@ -122,6 +122,7 @@ def test_filename_regex(make_nc, filenames, expected):
              'ocean-2d-wind_power_u-1monthly-mean-ym_0792_01.nc': 
              {
                 'contact': 'Add your name here',
+                'date_created': 'right now',
                 'email': 'Add your email address here',
                 'frequency': '1monthly',
                 'help': 'I need somebody',
@@ -155,10 +156,10 @@ def test_filename_regex_sorted(make_nc, filenames, expected):
         actual = get_meta_data_from_file(filepath)
 
         # Date created will be dynamic, so just remove it
-        del actual['date_created']
+        actual['date_created'] = expected[filename]['date_created']
 
         # Confirm contents are intact
         assert expected[filename] == actual
 
         # Confirm order is as expected
-        assert list(expected.keys()) == list(actual.keys())
+        assert list(expected[filename].keys()) == list(actual.keys())
