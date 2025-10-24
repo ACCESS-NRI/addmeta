@@ -3,7 +3,7 @@
 from __future__ import print_function
 
 
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
@@ -57,7 +57,7 @@ def combine_meta(fnames):
     dictionaries. The order of the files is the reverse order of preference, so
     files listed later overwrite fields from files list earlier"""
 
-    allmeta = OrderedDict()
+    allmeta = {}
 
     for fname in fnames:
         meta = read_yaml(fname)
@@ -185,10 +185,8 @@ def sort_metadict_remove_attrs(metadict, rootgrp):
         if attr not in metadict['global']:
             metadict['global'][attr] = rootgrp.getncattr(attr)
 
-    # Sort metadict (which is an OrderedDict)
-    metadict['global'] = OrderedDict(
-        {attr: metadict['global'][attr] for attr in sorted(metadict['global'].keys(), key=str.casefold)}
-    )
+    # Sort metadict
+    metadict['global'] = {attr: metadict['global'][attr] for attr in sorted(metadict['global'].keys(), key=str.casefold)}
 
     # Remove all existing attrs from the rootgrp
     for attr in rootgrp.ncattrs():
