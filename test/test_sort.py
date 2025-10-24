@@ -22,7 +22,7 @@ import pytest
 import netCDF4
 import xarray
 
-from addmeta import sort_metadict_remove_attrs
+from addmeta import order_dict
 from common import runcmd, get_meta_data_from_file, make_nc
 
 @pytest.fixture
@@ -95,14 +95,8 @@ def make_xarray_nc():
     ]
 )
 def test_sort(initial, expected):
-    with netCDF4.Dataset('test.nc', 'w', diskless=True) as ds:
-        ds.setncatts(initial)
-
-        assert ds.ncattrs() == list(initial.keys())
-
-        final = sort_metadict_remove_attrs({'global': initial}, ds)['global']
-
-        assert list(final.keys()) == list(expected.keys())
+    final = order_dict(initial)
+    assert list(final.keys()) == list(expected.keys())
 
 @pytest.mark.parametrize("use_xarray", [True, False])
 def test_sort_no_change(use_xarray, make_xarray_nc, make_nc):

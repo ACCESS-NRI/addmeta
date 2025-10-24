@@ -96,8 +96,9 @@ def add_meta(ncfile, metadict, template_vars, sort_attrs=False, verbose=False):
     # Set global meta data
     if "global" in metadict:
         if sort_attrs:
-            # Add all attrs to the metadict, sort it and remove attrs from rootgrp
-            metadict = sort_metadict_remove_attrs(metadict, rootgrp)
+            # Remove all global attributes, update with new attributes and then sort
+            # | merges two dicts preferring keys from the right
+            metadict['global'] = order_dict(delete_global_attributes(rootgrp) | metadict['global'])
 
         for attr, value in metadict['global'].items():
             set_attribute(rootgrp, attr, value, template_vars, verbose)
@@ -175,21 +176,20 @@ def list_from_file(fname):
 
     return filelist
 
-def sort_metadict_remove_attrs(metadict, rootgrp):
+def delete_global_attributes(rootgrp):
     """
-    Add all global attributes from rootgrp to the metadict, sort them, remove
-    the attributes from rootgrp and then return the new metadict
+    Delete all global attributes and return as dict
     """
-    # Add all existing attrs to the metadict (if they're not already there)
-    for attr in rootgrp.ncattrs():
-        if attr not in metadict['global']:
-            metadict['global'][attr] = rootgrp.getncattr(attr)
+    deleted = {}
 
-    # Sort metadict
-    metadict['global'] = {attr: metadict['global'][attr] for attr in sorted(metadict['global'].keys(), key=str.casefold)}
-
-    # Remove all existing attrs from the rootgrp
     for attr in rootgrp.ncattrs():
+        deleted[attr] = rootgrp.getncattr(attr)
         rootgrp.delncattr(attr)
+    
+    return deleted
 
-    return metadict
+def order_dict(unsorted):
+    """
+    Return dict sorted by key, case-insensitive
+    """
+    return dict(sorted(unsorted.items(), key=lambda item: item[0].casefold()))
