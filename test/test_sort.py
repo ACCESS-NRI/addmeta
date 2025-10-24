@@ -19,8 +19,27 @@ limitations under the License.
 """
 
 import pytest
-from addmeta import sort_attributes
 import netCDF4
+import xarray
+
+from addmeta import sort_attributes
+from common import runcmd, get_meta_data_from_file, make_nc
+
+@pytest.fixture
+def make_xarray_nc():
+    ncfilename = 'test/test_xarray.nc'
+    with xarray.Dataset() as ds:
+        # Duplicate the metadata created in make_nc
+        ds.attrs = {
+            'unlikelytobeoverwritten': "total rubbish",
+            'Publisher': 'Will be overwritten',
+        }
+        ds.to_netcdf(ncfilename)
+
+    yield ncfilename
+
+    cmd = f"rm {ncfilename}"
+    runcmd(cmd)
 
 @pytest.mark.parametrize(
     "initial,expected",
@@ -84,3 +103,44 @@ def test_sort(initial, expected):
         sort_attributes(ds)
 
         assert ds.ncattrs() == list(expected.keys())
+
+@pytest.mark.parametrize("use_xarray", [True, False])
+def test_multisort(use_xarray, make_xarray_nc, make_nc):
+    """
+    Test applying metadata in multiple rounds with some sorting
+
+    With the orginal method of sorting metadata this fails if the netCDF is created
+    with xarray - specifically the final result is not correctly sorted
+    """
+    # Getting the path is a bit fiddly using the fixtures
+    ncpath =  make_xarray_nc if use_xarray else make_nc
+
+    # Add some metadata to the file
+    runcmd(f"addmeta -m test/meta_sort1.yaml -v {ncpath}")
+
+    # Add some more metadata to it
+    runcmd(f"addmeta -m test/meta_sort2.yaml -v {ncpath}")
+
+    # Add the second set of metadata again and sort
+    runcmd(f"addmeta -m test/meta_sort2.yaml -v --sort {ncpath}")
+
+    # Check the metadata is in order
+    actual = get_meta_data_from_file(ncpath)
+
+    expected = {
+        '_1': 'one',
+        '_a': 'underscore ay',
+        '_z': 'underscored',
+        'a': 'ay',
+        'b': 'bee',
+        'm': 'emm',
+        'Publisher': 'Will be overwritten',
+        'unlikelytobeoverwritten': "total rubbish",
+        'z': 'zed',
+        'zz': 'double zee',
+    }
+
+    # Check the contents are correct
+    assert actual == expected
+    # Check the order of the attrs is correct
+    assert list(actual.keys()) == list(expected.keys())
