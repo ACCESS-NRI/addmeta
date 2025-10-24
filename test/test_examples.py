@@ -155,7 +155,7 @@ def test_filename_regex_sorted(make_nc, filenames, expected):
         filepath = f'{wd}/{filename}'
         actual = get_meta_data_from_file(filepath)
 
-        # Date created will be dynamic, so just remove it
+        # Date created will be dynamic, so adjust its value
         actual['date_created'] = expected[filename]['date_created']
 
         # Confirm contents are intact
