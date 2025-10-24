@@ -22,7 +22,7 @@ import pytest
 import netCDF4
 import xarray
 
-from addmeta import sort_attributes
+from addmeta import sort_metadict_remove_attrs
 from common import runcmd, get_meta_data_from_file, make_nc
 
 @pytest.fixture
@@ -100,9 +100,41 @@ def test_sort(initial, expected):
 
         assert ds.ncattrs() == list(initial.keys())
 
-        sort_attributes(ds)
+        final = sort_metadict_remove_attrs({'global': initial}, ds)['global']
 
-        assert ds.ncattrs() == list(expected.keys())
+        assert list(final.keys()) == list(expected.keys())
+
+@pytest.mark.parametrize("use_xarray", [True, False])
+def test_sort_no_change(use_xarray, make_xarray_nc, make_nc):
+    """
+    Test that sorting an nc still works if no attrs are changed
+    """
+    # Getting the path is a bit fiddly using the fixtures
+    ncpath =  make_xarray_nc if use_xarray else make_nc
+
+    expected = {
+        '_1': 'one',
+        '_z': 'underscored',
+        'a': 'ay',
+        'b': 'bee',
+        'Publisher': 'Will be overwritten',
+        'unlikelytobeoverwritten': "total rubbish",
+        'z': 'zed',
+    }
+
+    # Add the additiona metadata but don't sort
+    runcmd(f"addmeta -m test/meta_sort1.yaml {ncpath}")
+    
+    # Check the metadata is NOT in order
+    actual = get_meta_data_from_file(ncpath)
+    assert list(actual.keys()) != list(expected.keys())
+
+    # Add the same metadata (i.e. don't change contents) but sort this time
+    runcmd(f"addmeta -m test/meta_sort1.yaml -s {ncpath}")
+
+    # Check the metadata is now in order
+    actual = get_meta_data_from_file(ncpath)
+    assert list(actual.keys()) == list(expected.keys())
 
 @pytest.mark.parametrize("use_xarray", [True, False])
 def test_multisort(use_xarray, make_xarray_nc, make_nc):

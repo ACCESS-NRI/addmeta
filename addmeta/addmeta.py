@@ -57,7 +57,7 @@ def combine_meta(fnames):
     dictionaries. The order of the files is the reverse order of preference, so
     files listed later overwrite fields from files list earlier"""
 
-    allmeta = {}
+    allmeta = OrderedDict()
 
     for fname in fnames:
         meta = read_yaml(fname)
@@ -95,12 +95,12 @@ def add_meta(ncfile, metadict, template_vars, sort_attrs=False, verbose=False):
 
     # Set global meta data
     if "global" in metadict:
+        if sort_attrs:
+            # Add all attrs to the metadict, sort it and remove attrs from rootgrp
+            metadict = sort_metadict_remove_attrs(metadict, rootgrp)
+
         for attr, value in metadict['global'].items():
             set_attribute(rootgrp, attr, value, template_vars, verbose)
-
-    # Sort the global attributes
-    if sort_attrs:
-        sort_attributes(rootgrp)
 
     rootgrp.close()
 
@@ -175,20 +175,23 @@ def list_from_file(fname):
 
     return filelist
 
-def sort_attributes(group):
+def sort_metadict_remove_attrs(metadict, rootgrp):
     """
-    Sort the attributes of the given group lexicographically, ignoring case.
-    FIXME: Currently order of attrs will not update if none are added or removed elsewhere
+    Add all global attributes from rootgrp to the metadict, sort them, remove
+    the attributes from rootgrp and then return the new metadict
     """
-    # Get the sorted attributes - use str.casefold to ignore case
-    attrs_dict = OrderedDict()
-    for attr in sorted(group.ncattrs(), key=str.casefold):
-        attrs_dict[attr] = group.getncattr(attr)
+    # Add all existing attrs to the metadict (if they're not already there)
+    for attr in rootgrp.ncattrs():
+        if attr not in metadict['global']:
+            metadict['global'][attr] = rootgrp.getncattr(attr)
 
-    # Remove all the attributes
-    for attr in group.ncattrs():
-        group.delncattr(attr)
+    # Sort metadict (which is an OrderedDict)
+    metadict['global'] = OrderedDict(
+        {attr: metadict['global'][attr] for attr in sorted(metadict['global'].keys(), key=str.casefold)}
+    )
 
-    # Add the sorted attributes back on
-    for attr, value in attrs_dict.items():
-        group.setncattr(attr, value)
+    # Remove all existing attrs from the rootgrp
+    for attr in rootgrp.ncattrs():
+        rootgrp.delncattr(attr)
+
+    return metadict
