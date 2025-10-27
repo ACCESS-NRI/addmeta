@@ -6,6 +6,7 @@ from __future__ import print_function
 from collections import defaultdict
 from collections.abc import Mapping
 from datetime import datetime
+import io
 from pathlib import Path
 import re
 from warnings import warn
@@ -120,6 +121,15 @@ def match_filename_regex(filename, regexs, verbose=False):
 
     return vars
 
+def array_to_csv(array):
+    """
+    Turn any list, tuple or set into a CSV string and return
+    """
+    with io.StringIO() as f:
+        writer = csv.writer(f, quoting=csv.QUOTE_MINIMAL, lineterminator='')
+        writer.writerow(array)
+        return f.getvalue()
+
 def set_attribute(group, attribute, value, template_vars, verbose=False):
     """
     Small wrapper to select, delete, or set attribute depending 
@@ -135,6 +145,9 @@ def set_attribute(group, attribute, value, template_vars, verbose=False):
             finally:
                 if verbose: print(f"      - {attribute}")
     else:
+        if isinstance(value, (list, tuple, set)):
+            value = array_to_csv(value)  
+
         # Only valid to use jinja templates on strings
         if isinstance(value, str):
             try:
