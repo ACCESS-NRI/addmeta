@@ -10,7 +10,7 @@ from pathlib import Path
 import re
 from warnings import warn
 
-from jinja2 import Template, StrictUndefined, UndefinedError
+from jinja2 import Template, StrictUndefined, UndefinedError, DebugUndefined
 import netCDF4 as nc
 import yaml
 
@@ -85,6 +85,10 @@ def add_meta(ncfile, metadict, template_vars, sort_attrs=False, verbose=False):
     template_vars['name'] = ncpath.name
     template_vars['fullpath'] = str(ncpath.absolute())
 
+    # Expand jinja template variable in the metadata dict
+    # Including any dynamic dependancies
+    metadict = resolve_template(metadict, template_vars, verbose=verbose)
+
     rootgrp = nc.Dataset(ncfile, "r+")
     # Add metadata to matching variables
     if "variables" in metadict:
@@ -120,6 +124,50 @@ def match_filename_regex(filename, regexs, verbose=False):
 
     return vars
 
+def resolve_template(metadict, template_vars, verbose=False):
+    """
+    Iteratively resolve the jinja variables in the attributes.
+    """
+    def _walk_dict(d, template):
+        if isinstance(d, dict):
+            # There shouldn't be any circular refs so recursion is safe
+            return_d = {}
+            for key, item in d.items():
+                try:
+                    return_d[key] = _walk_dict(item, template)
+                except UndefinedError as e:
+                    warn(f"Unable to expand '{item}' from {template}: {e}. Skipping setting this attribute.")
+            return return_d
+        else:
+            if isinstance(d, str):
+                d = Template(d, undefined=DebugUndefined).render(template)
+
+        return d
+
+    # As a precaution against circular jinja keys use a loop limit
+    LIMIT=100
+    for _ in range(LIMIT):
+        # Merge global meta data and template (favoring template)
+        if 'global' in metadict:
+            template_vars = metadict['global'] | template_vars
+
+        # Don't add variable attributes to the template_vars since they're
+        # comparatively complicated
+
+        # Resolve template strings
+        resolved_d = _walk_dict(metadict, template_vars)
+
+        # If the resolved dict is the same as the previous one then it's done
+        if resolved_d == metadict:
+            break
+        
+        metadict = resolved_d
+    else:
+        raise ValueError(f"Unable to resolve all Jinja template values after {LIMIT} attempts.\n"
+                         f"It's like that there is a circular key dependancy in:\n{metadict}")
+
+    return metadict
+
 def set_attribute(group, attribute, value, template_vars, verbose=False):
     """
     Small wrapper to select, delete, or set attribute depending 
@@ -136,6 +184,7 @@ def set_attribute(group, attribute, value, template_vars, verbose=False):
                 if verbose: print(f"      - {attribute}")
     else:
         # Only valid to use jinja templates on strings
+        # Templates are now expanded earlier in resolve_template but we need to catch those still undefined
         if isinstance(value, str):
             try:
                 value = Template(value, undefined=StrictUndefined).render(template_vars)
@@ -158,8 +207,7 @@ def find_and_add_meta(ncfiles, metadata, fnregexs, sort_attrs=False, verbose=Fal
         if verbose: print(f"  {fname}")
 
         # Match supplied regex against filename and add metadata
-        template_vars = match_filename_regex(fname, fnregexs, verbose)
-
+        template_vars = match_filename_regex(fname, fnregexs, verbose)        
         add_meta(fname, metadata, template_vars, sort_attrs=sort_attrs, verbose=verbose)
         
 def skip_comments(file):
