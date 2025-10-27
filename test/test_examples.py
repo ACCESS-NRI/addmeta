@@ -113,3 +113,53 @@ def test_filename_regex(make_nc, filenames, expected):
         assert( actual.pop('date_created') )
         assert( expected[filename] == actual )
 
+@pytest.mark.parametrize(
+    "filenames,expected",
+    [
+        pytest.param(
+            ['ocean-2d-wind_power_u-1monthly-mean-ym_0792_01.nc'],
+            {
+             'ocean-2d-wind_power_u-1monthly-mean-ym_0792_01.nc': 
+             {
+                'contact': 'Add your name here',
+                'date_created': 'right now',
+                'email': 'Add your email address here',
+                'frequency': '1monthly',
+                'help': 'I need somebody',
+                'license': 'CC-BY-4.0',
+                'model': 'ACCESS-ESM1.6',
+                'model_version': '2.1',
+                'nominal_resolution': '100 km',
+                'Publisher': 'Will be overwritten',
+                'realm': 'ocean',
+                'reference': 'https://doi.org/10.1071/ES19035',
+                'url': 'https://github.com/ACCESS-NRI/access-esm1.5-configs.git',
+                'version': '1.1',
+             },
+            },
+            id="ocean" 
+        ),
+    ],
+)
+def test_filename_regex_sorted(make_nc, filenames, expected):
+
+    wd = 'test/examples/ocean'
+
+    for filename in filenames:
+        filepath = f'{wd}/{filename}'
+        runcmd(f'cp {wd}/test.nc {filepath}')
+
+    runcmd("addmeta -c addmetalist -v --sort --fnregex='^oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'", wd)
+
+    for filename in filenames:
+        filepath = f'{wd}/{filename}'
+        actual = get_meta_data_from_file(filepath)
+
+        # Date created will be dynamic, so adjust its value
+        actual['date_created'] = expected[filename]['date_created']
+
+        # Confirm contents are intact
+        assert expected[filename] == actual
+
+        # Confirm order is as expected
+        assert list(expected[filename].keys()) == list(actual.keys())

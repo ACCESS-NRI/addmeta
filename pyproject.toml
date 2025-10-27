@@ -28,6 +28,7 @@ dev = [
     "six",
     "pytest-cov",
     "pytest",
+    "xarray",
 ]
 
 [project.urls]

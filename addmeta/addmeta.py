@@ -65,7 +65,7 @@ def combine_meta(fnames):
 
     return allmeta
 
-def add_meta(ncfile, metadict, template_vars, verbose=False):
+def add_meta(ncfile, metadict, template_vars, sort_attrs=False, verbose=False):
     """
     Add meta data from a dictionary to a netCDF file
     """
@@ -95,6 +95,11 @@ def add_meta(ncfile, metadict, template_vars, verbose=False):
 
     # Set global meta data
     if "global" in metadict:
+        if sort_attrs:
+            # Remove all global attributes, update with new attributes and then sort
+            # | merges two dicts preferring keys from the right
+            metadict['global'] = order_dict(delete_global_attributes(rootgrp) | metadict['global'])
+
         for attr, value in metadict['global'].items():
             set_attribute(rootgrp, attr, value, template_vars, verbose)
 
@@ -142,7 +147,7 @@ def set_attribute(group, attribute, value, template_vars, verbose=False):
 
         group.setncattr(attribute, value)
 
-def find_and_add_meta(ncfiles, metadata, fnregexs, verbose=False):
+def find_and_add_meta(ncfiles, metadata, fnregexs, sort_attrs=False, verbose=False):
     """
     Add meta data from 1 or more yaml formatted files to one or more
     netCDF files
@@ -155,7 +160,7 @@ def find_and_add_meta(ncfiles, metadata, fnregexs, verbose=False):
         # Match supplied regex against filename and add metadata
         template_vars = match_filename_regex(fname, fnregexs, verbose)
 
-        add_meta(fname, metadata, template_vars, verbose)
+        add_meta(fname, metadata, template_vars, sort_attrs=sort_attrs, verbose=verbose)
         
 def skip_comments(file):
     """Skip lines that begin with a comment character (#) or are empty
@@ -170,3 +175,21 @@ def list_from_file(fname):
         filelist = [Path(fname).parent / file for file in skip_comments(f)]
 
     return filelist
+
+def delete_global_attributes(rootgrp):
+    """
+    Delete all global attributes and return as dict
+    """
+    deleted = {}
+
+    for attr in rootgrp.ncattrs():
+        deleted[attr] = rootgrp.getncattr(attr)
+        rootgrp.delncattr(attr)
+    
+    return deleted
+
+def order_dict(unsorted):
+    """
+    Return dict sorted by key, case-insensitive
+    """
+    return dict(sorted(unsorted.items(), key=lambda item: item[0].casefold()))

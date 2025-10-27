@@ -35,7 +35,8 @@ def parse_args(args):
     parser.add_argument("-c","--cmdlineargs", help="File containing a list of command-line arguments", action='store')
     parser.add_argument("-m","--metafiles", help="One or more meta-data files in YAML format", action='append')
     parser.add_argument("-l","--metalist", help="File containing a list of meta-data files", action='append')
-    parser.add_argument("-f","--fnregex", help="Extract metadata from filename using regex", action='append')
+    parser.add_argument("-f","--fnregex", help="Extract metadata from filename using regex", default=[], action='append')
+    parser.add_argument("-s","--sort", help="Sort all keys lexicographically, ignoring case", action="store_true")
     parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
     parser.add_argument("files", help="netCDF files", nargs='*')
 
@@ -57,7 +58,7 @@ def main(args):
 
     if verbose: print("metafiles: "," ".join([str(f) for f in metafiles]))
 
-    find_and_add_meta(args.files, combine_meta(metafiles), args.fnregex, verbose)
+    find_and_add_meta(args.files, combine_meta(metafiles), args.fnregex, args.sort, verbose)
 
 def safe_join_lists(list1, list2):
     """
