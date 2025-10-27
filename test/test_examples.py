@@ -56,6 +56,7 @@ def make_nc():
                 'version': '1.1', 
                 'url': 'https://github.com/ACCESS-NRI/access-esm1.5-configs.git', 
                 'help': 'I need somebody', 
+                'keywords': 'global,access-esm1.6',
                 'model_version': '2.1', 
                 'frequency': '1monthly'
              },
@@ -71,6 +72,7 @@ def make_nc():
                 'version': '1.1',
                 'url': 'https://github.com/ACCESS-NRI/access-esm1.5-configs.git',
                 'help': 'I need somebody',
+                'keywords': 'global,access-esm1.6',
                 'model_version': '2.1',
                 'frequency': '1yearly'
              },
@@ -87,6 +89,7 @@ def make_nc():
                 'version': "1.1" ,
                 'url': "https://github.com/ACCESS-NRI/access-esm1.5-configs.git" ,
                 'help': "I need somebody" ,
+                'keywords': 'global,access-esm1.6',
                 'model_version': "2.1" ,
                 'frequency': "1monthly" ,
              },
@@ -126,6 +129,7 @@ def test_filename_regex(make_nc, filenames, expected):
                 'email': 'Add your email address here',
                 'frequency': '1monthly',
                 'help': 'I need somebody',
+                'keywords': 'global,access-esm1.6',
                 'license': 'CC-BY-4.0',
                 'model': 'ACCESS-ESM1.6',
                 'model_version': '2.1',
