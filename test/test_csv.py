@@ -26,7 +26,7 @@ from addmeta import array_to_csv
     [ 
         (('a',1,'three four','five, six'), 'a,1,three four,"five, six"'),
         # Not clear if double-quoting quotes is the desired behaviour ...
-        (('"a"',1,'three four','five, six'), '""a"",1,three four,"five, six"'),
+        (('"a"',1,'three four','five, six'), '"""a""",1,three four,"five, six"'),
     ],
 )
 def test_array_to_csv(array, string):
