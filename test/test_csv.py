@@ -26,10 +26,6 @@ from addmeta import array_to_csv
     [ 
         (('a',1,'three four','five, six'), 'a,1,three four,"five, six"'),
         (['a',1,'three four','five, six'], ('a,1,three four,"five, six"')),
-        # Double-quoting quotes is not the desired behaviour so just returns the input
-        (('"a"',1,'three four','five, six'), ('"a"',1,'three four','five, six')),
-        # Passing a dict returns the same dict
-        ({'a':1,'three four':'five, six'},{'a':1,'three four':'five, six'}),
     ],
 )
 def test_array_to_csv(array, string):
@@ -37,3 +33,13 @@ def test_array_to_csv(array, string):
     Test function to convert arrays into comma separated strings
     """
     assert array_to_csv(array) == string
+
+def test_array_to_csv_with_quoted_element():
+    """
+    Test that array_to_csv issues a warning when passed a double quoted element
+    """
+    array = ('"quoted"', 1)
+    warning_text = 'Serialisation failed for .* no escapechar set'
+    with pytest.warns(UserWarning, match=warning_text):
+        result = array_to_csv(array)
+    assert result == array

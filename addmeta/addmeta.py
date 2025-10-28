@@ -130,8 +130,9 @@ def array_to_csv(array):
         try:
             writer = csv.writer(f, doublequote=False, quoting=csv.QUOTE_MINIMAL, lineterminator='')
             writer.writerow(array)
-        except:
+        except csv.Error as e:
             # In case of failure return original unmodified
+            warn(f"Serialisation failed for '{array}': {e}")
             return array
         else:
             return f.getvalue()
