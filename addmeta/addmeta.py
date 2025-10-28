@@ -127,9 +127,14 @@ def array_to_csv(array):
     Turn any list, tuple or set into a CSV string and return
     """
     with io.StringIO() as f:
-        writer = csv.writer(f, quoting=csv.QUOTE_MINIMAL, lineterminator='')
-        writer.writerow(array)
-        return f.getvalue()
+        try:
+            writer = csv.writer(f, doublequote=False, quoting=csv.QUOTE_MINIMAL, lineterminator='')
+            writer.writerow(array)
+        except:
+            # In case of failure return original unmodified
+            return array
+        else:
+            return f.getvalue()
 
 def set_attribute(group, attribute, value, template_vars, verbose=False):
     """
@@ -146,8 +151,8 @@ def set_attribute(group, attribute, value, template_vars, verbose=False):
             finally:
                 if verbose: print(f"      - {attribute}")
     else:
-        if isinstance(value, (list, tuple, set)):
-            value = array_to_csv(value)  
+        if isinstance(value, (list, tuple)):
+            value = array_to_csv(value)
 
         # Only valid to use jinja templates on strings
         if isinstance(value, str):

@@ -25,8 +25,11 @@ from addmeta import array_to_csv
 @pytest.mark.parametrize("array,string", 
     [ 
         (('a',1,'three four','five, six'), 'a,1,three four,"five, six"'),
-        # Not clear if double-quoting quotes is the desired behaviour ...
-        (('"a"',1,'three four','five, six'), '"""a""",1,three four,"five, six"'),
+        (['a',1,'three four','five, six'], ('a,1,three four,"five, six"')),
+        # Double-quoting quotes is not the desired behaviour so just returns the input
+        (('"a"',1,'three four','five, six'), ('"a"',1,'three four','five, six')),
+        # Passing a dict returns the same dict
+        ({'a':1,'three four':'five, six'},{'a':1,'three four':'five, six'}),
     ],
 )
 def test_array_to_csv(array, string):
