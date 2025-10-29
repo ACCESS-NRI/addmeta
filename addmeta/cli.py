@@ -21,6 +21,7 @@ limitations under the License.
 import argparse
 from glob import glob
 import os
+from pathlib import Path
 import sys
 
 from addmeta import find_and_add_meta, combine_meta, list_from_file, skip_comments
@@ -75,6 +76,15 @@ def safe_join_lists(list1, list2):
     else:
         return list1 + list2
 
+def resolve_relative_paths(files, base_path):
+    """
+    Resolve relative paths for a list of files against a base path.
+    """
+    resolved = []
+    for file in files:
+        resolved.extend([str(f) for f in base_path.glob(file)])
+    return resolved
+
 def main_parse_args(args):
     """
     Call main with list of arguments. Callable from tests
@@ -85,16 +95,18 @@ def main_parse_args(args):
     if (parsed_args.cmdlineargs is not None):
         # If a cmdlineargs file has been specified, read every line 
         # and parse
-        with open(parsed_args.cmdlineargs, 'r') as file:
+        cmdlinefile = Path(parsed_args.cmdlineargs)
+        with open(cmdlinefile, 'r') as file:
             newargs = [line for line in skip_comments(file)]
         _, new_parsed_args = parse_args(newargs)
 
-        # Expand (glob) patterns in positional arguments (files)
-        filelist = []
-        for file in new_parsed_args.files:
-            filelist.extend(glob(file))
-        if len(filelist) > 0:
-            new_parsed_args.files = filelist
+        # Convert relative paths in metafiles to be relative to cmdlineargs file
+        if new_parsed_args.metafiles is not None:
+            new_parsed_args.metafiles = resolve_relative_paths(new_parsed_args.metafiles, cmdlinefile.parent)
+
+        # Expand (glob) patterns in positional arguments (files) and convert relative paths
+        if new_parsed_args.files is not None:
+            new_parsed_args.files = resolve_relative_paths(new_parsed_args.files, cmdlinefile.parent)
 
         # Combine new and existing parsed arguments, ommitting cmdlineargs 
         # option.  Adding additional command line arguments may require 
