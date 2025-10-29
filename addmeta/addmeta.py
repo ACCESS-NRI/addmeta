@@ -213,7 +213,7 @@ def find_and_add_meta(ncfiles, metadata, fnregexs, sort_attrs=False, verbose=Fal
 
         # Match supplied regex against filename and add metadata
         template_vars = match_filename_regex(fname, fnregexs, verbose)        
-        add_meta(fname, metadata, template_vars, sort_attrs=sort_attrs, verbose=verbose)
+        add_meta(fname, deepcopy(metadata), template_vars, sort_attrs=sort_attrs, verbose=verbose)
         
 def skip_comments(file):
     """Skip lines that begin with a comment character (#) or are empty
