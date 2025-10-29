@@ -5,6 +5,7 @@ from __future__ import print_function
 
 from collections import defaultdict
 from collections.abc import Mapping
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 import re
@@ -85,8 +86,7 @@ def add_meta(ncfile, metadict, template_vars, sort_attrs=False, verbose=False):
     template_vars['name'] = ncpath.name
     template_vars['fullpath'] = str(ncpath.absolute())
 
-    # Expand jinja template variable in the metadata dict
-    # Including any dynamic dependancies
+    # Expand remaining jinja template variables
     metadict = resolve_template(metadict, template_vars, verbose=verbose)
 
     rootgrp = nc.Dataset(ncfile, "r+")
@@ -128,24 +128,16 @@ def resolve_template(metadict, template_vars, verbose=False):
     """
     Iteratively resolve the jinja variables in the attributes.
     """
-    def _walk_dict(d, template):
-        if isinstance(d, dict):
-            # There shouldn't be any circular refs so recursion is safe
-            return_d = {}
-            for key, item in d.items():
-                try:
-                    return_d[key] = _walk_dict(item, template)
-                except UndefinedError as e:
-                    warn(f"Unable to expand '{item}' from {template}: {e}. Skipping setting this attribute.")
-            return return_d
-        else:
-            if isinstance(d, str):
-                d = Template(d, undefined=DebugUndefined).render(template)
-
-        return d
+    # Filter items by simply looking for jinja key substring
+    filter_f = lambda s: '{{' in s
+    # Resolve jinja templates and leave missing keys for later with DebugUndefined
+    resolve_f = lambda s, t: Template(s, undefined=DebugUndefined).render(t)
+    # Combine filter and resolve, note that template_vars is resolved when lambda is called not created
+    filter_and_resolve = lambda d, t: {k: resolve_f(v, template_vars) for k, v in d.items() if filter_f(v)}
 
     # As a precaution against circular jinja keys use a loop limit
     LIMIT=100
+    to_resolve = deepcopy(metadict)
     for _ in range(LIMIT):
         # Merge global meta data and template (favoring template)
         if 'global' in metadict:
@@ -154,17 +146,24 @@ def resolve_template(metadict, template_vars, verbose=False):
         # Don't add variable attributes to the template_vars since they're
         # comparatively complicated
 
-        # Resolve template strings
-        resolved_d = _walk_dict(metadict, template_vars)
+        # Only resolve templates where there is a template
+        to_resolve['global'] = filter_and_resolve(to_resolve.get('global', {}), template_vars)
+        to_resolve['variables'] = {var: filter_and_resolve(var_d, template_vars) for var, var_d in to_resolve.get('variables', {}).items()}
 
-        # If the resolved dict is the same as the previous one then it's done
-        if resolved_d == metadict:
+        # Finished when there's nothing left to resolve
+        if to_resolve['global']=={} and \
+            all([var=={} for var in to_resolve['variables'].values()]):
             break
-        
-        metadict = resolved_d
+
+        # Update with the resolved strings
+        if 'global' in metadict:
+            metadict['global'] |= to_resolve['global']
+        if 'variables' in metadict:
+            for var, var_d in to_resolve['variables'].items():
+                metadict['variables'][var] |= var_d
     else:
         raise ValueError(f"Unable to resolve all Jinja template values after {LIMIT} attempts.\n"
-                         f"It's like that there is a circular key dependancy in:\n{metadict}")
+                         f"It's likely that there is a circular key dependancy in:\n{metadict}")
 
     return metadict
 
@@ -201,6 +200,8 @@ def find_and_add_meta(ncfiles, metadata, fnregexs, sort_attrs=False, verbose=Fal
     Add meta data from 1 or more yaml formatted files to one or more
     netCDF files
     """
+    # Resolve as much as possible in the shared template
+    metadict = resolve_template(metadata, {})
 
     if verbose: print("Processing netCDF files:")
     for fname in ncfiles:
