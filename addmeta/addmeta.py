@@ -147,13 +147,17 @@ def resolve_template(metadict, template_vars, verbose=False):
         # comparatively complicated
 
         # Only resolve templates where there is a template
-        to_resolve['global'] = filter_and_resolve(to_resolve.get('global', {}), template_vars)
-        to_resolve['variables'] = {var: filter_and_resolve(var_d, template_vars) for var, var_d in to_resolve.get('variables', {}).items()}
+        resolved = {}
+        resolved['global'] = filter_and_resolve(to_resolve.get('global', {}), template_vars)
+        resolved['variables'] = {var: filter_and_resolve(var_d, template_vars) for var, var_d in to_resolve.get('variables', {}).items()}
 
-        # Finished when there's nothing left to resolve
-        if to_resolve['global']=={} and \
-            all([var=={} for var in to_resolve['variables'].values()]):
+        # Finished when there's nothing left to resolve or if to_resolve dict hasn't changed
+        if to_resolve == resolved or \
+            resolved['global']=={} and \
+            all([var=={} for var in resolved['variables'].values()]):
             break
+
+        to_resolve = resolved
 
         # Update with the resolved strings
         if 'global' in metadict:
