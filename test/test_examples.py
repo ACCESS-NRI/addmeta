@@ -106,7 +106,7 @@ def test_filename_regex(make_nc, filenames, expected):
         filepath = f'{wd}/{filename}'
         runcmd(f'cp {wd}/test.nc {filepath}')
 
-    runcmd("addmeta -c addmetalist -v --fnregex='^oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'", wd)
+    runcmd(r"addmeta -c addmetalist -v --fnregex='^oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'", wd)
 
     for filename in filenames:
         filepath = f'{wd}/{filename}'
@@ -153,7 +153,7 @@ def test_filename_regex_sorted(make_nc, filenames, expected):
         filepath = f'{wd}/{filename}'
         runcmd(f'cp {wd}/test.nc {filepath}')
 
-    runcmd("addmeta -c addmetalist -v --sort --fnregex='^oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'", wd)
+    runcmd(r"addmeta -c addmetalist -v --sort --fnregex='^oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'", wd)
 
     for filename in filenames:
         filepath = f'{wd}/{filename}'
