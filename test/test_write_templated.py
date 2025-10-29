@@ -182,6 +182,7 @@ def test_undefined_meta(make_nc):
         ),
     ]
 )
+@pytest.mark.filterwarnings("ignore:Skip setting attribute \'variable\'")
 def test_find_add_filename_metadata(make_nc, ncfiles, metadata, fnregexs, expected):
     
     # Make paths relative to test directory and make copy
@@ -197,3 +198,83 @@ def test_find_add_filename_metadata(make_nc, ncfiles, metadata, fnregexs, expect
         assert expectation == get_meta_data_from_file(file)
         # Clean-up
         runcmd(f'rm {file}')
+
+@pytest.mark.parametrize(
+    "filename,metadata,expected",
+    [
+        pytest.param( # Test updating a variable's attr
+            'variable_attr.nc',
+            {
+                'variables':
+                {
+                    'temp': {
+                        'units': 'degK',
+                    },
+                }
+            },
+            {
+                'variables': {
+                    'temp': {
+                        'units': "degK",
+                        '_FillValue': 1.e+20,
+                        'missing_value': 1.e+20,
+                        'long_name': "Temperature",
+                    }
+                }
+            },
+        ),
+        pytest.param( # Test setting attrs that depends on another attr
+            'dependant_attr.nc',
+            {
+                'global': 
+                {
+                    'a': 'a',
+                    'b': '{{ a }}',
+                },
+            },
+            {
+                'global': {
+                    'unlikelytobeoverwritten': 'total rubbish',
+                    'Publisher': "Will be overwritten",
+                    'a': 'a',
+                    'b': 'a',
+                }
+            },
+        ),
+        pytest.param( # Test setting attrs that depends on list attr
+            'dependant_list_attr.nc',
+            {
+                'global': 
+                {
+                    'a': ['1', '2', '3'],
+                    'b': '{{ a }}',
+                },
+            },
+            {
+                'global': {
+                    'unlikelytobeoverwritten': 'total rubbish',
+                    'Publisher': "Will be overwritten",
+                    'a': '1,2,3',
+                    'b': '1,2,3',
+                }
+            },
+        ),
+    ]
+)
+def test_add_variable_metadata(make_nc, filename, metadata, expected):
+    orig_filepath, new_filepath = make_nc, f"test/{filename}"
+    runcmd(f'cp {orig_filepath} {new_filepath}')
+
+    # Add metadata
+    find_and_add_meta([new_filepath], metadata, [])
+
+    # Confirm that the global metadata has been updated
+    if 'global' in expected:
+        assert expected['global'] == get_meta_data_from_file(new_filepath)
+
+    # Confirm that the variable metadata has been updated
+    if 'variables' in expected:
+        for varname, var_attrs in expected['variables'].items():
+            assert var_attrs == get_meta_data_from_file(new_filepath, var=varname)
+
+    runcmd(f'rm {new_filepath}')

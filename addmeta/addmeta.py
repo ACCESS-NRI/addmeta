@@ -173,14 +173,22 @@ def find_and_add_meta(ncfiles, metadata, fnregexs, sort_attrs=False, verbose=Fal
     netCDF files
     """
 
+    # Populate template with resolved global items (i.e. anything without '{{ }}')
+    filter_f = lambda item: not (isinstance(item[1], str) and '{{' in item[1])
+    template_vars = dict(filter(filter_f, metadata.get('global', {}).items()))
+
+    # Any template vars from global that are lists need to be serialised
+    template_vars = {k: array_to_csv(v) if isinstance(v, (tuple, list)) else v \
+        for k, v in template_vars.items()}
+
     if verbose: print("Processing netCDF files:")
     for fname in ncfiles:
         if verbose: print(f"  {fname}")
 
         # Match supplied regex against filename and add metadata
-        template_vars = match_filename_regex(fname, fnregexs, verbose)
+        template_vars_file = template_vars | match_filename_regex(fname, fnregexs, verbose)
 
-        add_meta(fname, metadata, template_vars, sort_attrs=sort_attrs, verbose=verbose)
+        add_meta(fname, metadata, template_vars_file, sort_attrs=sort_attrs, verbose=verbose)
         
 def skip_comments(file):
     """Skip lines that begin with a comment character (#) or are empty
