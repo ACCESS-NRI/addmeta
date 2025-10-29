@@ -129,7 +129,7 @@ def resolve_template(metadict, template_vars, verbose=False):
     Iteratively resolve the jinja variables in the attributes.
     """
     # Filter items by simply looking for jinja key substring
-    filter_f = lambda s: '{{' in s
+    filter_f = lambda s: '{{' in s if isinstance(s, str) else True
     # Resolve jinja templates and leave missing keys for later with DebugUndefined
     resolve_f = lambda s, t: Template(s, undefined=DebugUndefined).render(t)
     # Combine filter and resolve, note that template_vars is resolved when lambda is called not created
