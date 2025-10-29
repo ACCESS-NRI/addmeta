@@ -192,7 +192,7 @@ def test_find_add_filename_metadata(make_nc, ncfiles, metadata, fnregexs, expect
         runcmd(f'cp test/test.nc {file}')
 
     # Add metadata extracted from filename
-    find_and_add_meta(ncfiles, metadata, fnregexs, verbose=True)
+    find_and_add_meta(ncfiles, metadata, fnregexs)
 
     for (file, expectation) in zip(ncfiles, expected):
         assert expectation == get_meta_data_from_file(file)
