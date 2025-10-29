@@ -177,6 +177,10 @@ def find_and_add_meta(ncfiles, metadata, fnregexs, sort_attrs=False, verbose=Fal
     filter_f = lambda item: not (isinstance(item[1], str) and '{{' in item[1])
     template_vars = dict(filter(filter_f, metadata.get('global', {}).items()))
 
+    # Any template vars from global that are lists need to be serialised
+    template_vars = {k: array_to_csv(v) if isinstance(v, (tuple, list)) else v \
+        for k, v in template_vars.items()}
+
     if verbose: print("Processing netCDF files:")
     for fname in ncfiles:
         if verbose: print(f"  {fname}")

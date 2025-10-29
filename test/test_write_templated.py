@@ -241,6 +241,24 @@ def test_find_add_filename_metadata(make_nc, ncfiles, metadata, fnregexs, expect
                 }
             },
         ),
+        pytest.param( # Test setting attrs that depends on list attr
+            'dependant_list_attr.nc',
+            {
+                'global': 
+                {
+                    'a': ['1', '2', '3'],
+                    'b': '{{ a }}',
+                },
+            },
+            {
+                'global': {
+                    'unlikelytobeoverwritten': 'total rubbish',
+                    'Publisher': "Will be overwritten",
+                    'a': '1,2,3',
+                    'b': '1,2,3',
+                }
+            },
+        ),
     ]
 )
 def test_add_variable_metadata(make_nc, filename, metadata, expected):
