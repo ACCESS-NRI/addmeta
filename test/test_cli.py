@@ -59,3 +59,21 @@ def test_cmdlinearg_from_file(mock_main, touch_nc):
               files=touch_nc[0:2])
 
     mock_main.assert_called_once_with(all_args)
+
+def test_missing_cmdlinearg_file():
+
+    fname = "filedoesnotexist"
+
+    args = [f"-c={fname}", ]
+
+    with pytest.raises(SystemExit, match=f"Error: cmdlineargs file '{fname}' not found"):
+       addmeta.cli.main_parse_args(args)
+
+def test_missing_cmdlinearg_file():
+
+    fname = "filedoesnotexist"
+
+    args = [f"-m={fname}", ['one.nc', 'two.nc']]
+
+    with pytest.raises(FileNotFoundError, match=f"No such file or directory: 'filedoesnotexist'"):
+       addmeta.cli.main_parse_args(args)

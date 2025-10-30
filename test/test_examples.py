@@ -18,32 +18,36 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import os
 from pathlib import Path
 import pytest
+import shutil
 
+from addmeta import cli
 from common import runcmd, get_meta_data_from_file
 
 @pytest.fixture
 def make_nc():
-    wd = 'test/examples/ocean'
-    ncfilename = f'{wd}/test.nc'
+    wd = Path('test/examples/ocean')
+    ncfilename = wd / 'test.nc'
     cmd = f'ncgen -o {ncfilename} test/test.cdl'
     runcmd(cmd)
     yield ncfilename
-    files = [ str(p) for p in Path(wd).glob('*.nc') ]
-    cmd = 'rm '+" ".join(files)
-    runcmd(cmd)
+    for f in wd.glob('**/*.nc'):
+        f.unlink()
+    for f in wd.glob('subdir*'):
+        f.rmdir()
 
 
 @pytest.mark.parametrize(
     "filenames,expected",
     [
         pytest.param(
-            ['ocean-2d-wind_power_u-1monthly-mean-ym_0792_01.nc',
+            ['subdir1/ocean-2d-wind_power_u-1monthly-mean-ym_0792_01.nc',
              'ocean-3d-power_diss_drag-1yearly-mean-ym_0792_07.nc',
              'oceanbgc-3d-zprod_gross-1monthly-mean-ym_0792_01.nc'],
             {
-             'ocean-2d-wind_power_u-1monthly-mean-ym_0792_01.nc': 
+             'subdir1/ocean-2d-wind_power_u-1monthly-mean-ym_0792_01.nc': 
              {
                 'Publisher': 'Will be overwritten', 
                 'contact': 'Add your name here', 
@@ -100,16 +104,18 @@ def make_nc():
 )
 def test_filename_regex(make_nc, filenames, expected):
 
-    wd = 'test/examples/ocean'
+    wd = Path('test/examples/ocean')
+    testfile = wd / 'test.nc'
 
     for filename in filenames:
-        filepath = f'{wd}/{filename}'
-        runcmd(f'cp {wd}/test.nc {filepath}')
+        filepath = wd / filename
+        os.makedirs(filepath.parent, exist_ok=True)
+        shutil.copy(testfile, filepath)
 
-    runcmd(r"addmeta -c addmetalist -v --fnregex='^oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'", wd)
+    runcmd(f"addmeta -c {wd}/addmetalist -v --fnregex='oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'")
 
     for filename in filenames:
-        filepath = f'{wd}/{filename}'
+        filepath = wd / filename
         actual = get_meta_data_from_file(filepath)
 
         # Date created will be dynamic, so remove but make sure it exists
@@ -120,9 +126,9 @@ def test_filename_regex(make_nc, filenames, expected):
     "filenames,expected",
     [
         pytest.param(
-            ['ocean-2d-wind_power_u-1monthly-mean-ym_0792_01.nc'],
+            ['subdir1/ocean-2d-wind_power_u-1monthly-mean-ym_0792_01.nc'],
             {
-             'ocean-2d-wind_power_u-1monthly-mean-ym_0792_01.nc': 
+             'subdir1/ocean-2d-wind_power_u-1monthly-mean-ym_0792_01.nc': 
              {
                 'contact': 'Add your name here',
                 'date_created': 'right now',
@@ -147,16 +153,18 @@ def test_filename_regex(make_nc, filenames, expected):
 )
 def test_filename_regex_sorted(make_nc, filenames, expected):
 
-    wd = 'test/examples/ocean'
+    wd = Path('test/examples/ocean')
+    testfile = wd / 'test.nc'
 
     for filename in filenames:
-        filepath = f'{wd}/{filename}'
-        runcmd(f'cp {wd}/test.nc {filepath}')
+        filepath = wd / filename
+        os.makedirs(filepath.parent, exist_ok=True)
+        shutil.copy(testfile, filepath)
 
-    runcmd(r"addmeta -c addmetalist -v --sort --fnregex='^oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'", wd)
+    runcmd(f"addmeta -c {wd}/addmetalist -v --sort --fnregex='oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'")
 
     for filename in filenames:
-        filepath = f'{wd}/{filename}'
+        filepath = wd / filename
         actual = get_meta_data_from_file(filepath)
 
         # Date created will be dynamic, so adjust its value
