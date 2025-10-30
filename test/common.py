@@ -33,7 +33,7 @@ def runcmd(cmd, rwd=None):
     cwd = Path.cwd()
     if rwd is not None:
         cwd = str(cwd / rwd)
-    subprocess.check_call(shlex.split(cmd),stderr=subprocess.STDOUT, cwd=cwd)
+    subprocess.run(shlex.split(cmd),stderr=subprocess.STDOUT, cwd=cwd)
 
 @pytest.fixture
 def make_nc(tmp_path):
