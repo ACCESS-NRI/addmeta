@@ -96,9 +96,13 @@ def main_parse_args(args):
         # If a cmdlineargs file has been specified, read every line 
         # and parse
         cmdlinefile = Path(parsed_args.cmdlineargs)
-        with open(cmdlinefile, 'r') as file:
-            newargs = [line for line in skip_comments(file)]
-        _, new_parsed_args = parse_args(newargs)
+        try:
+            with open(cmdlinefile, 'r') as file:
+                newargs = [line for line in skip_comments(file)]
+        except FileNotFoundError:
+            sys.exit(f"Error: cmdlineargs file '{cmdlinefile}' not found")
+        else:
+            _, new_parsed_args = parse_args(newargs)
 
         # Convert relative paths in metafiles to be relative to cmdlineargs file
         if new_parsed_args.metafiles is not None:
