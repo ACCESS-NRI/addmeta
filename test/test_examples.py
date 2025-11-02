@@ -112,7 +112,7 @@ def test_filename_regex(make_nc, filenames, expected):
         os.makedirs(filepath.parent, exist_ok=True)
         shutil.copy(testfile, filepath)
 
-    runcmd(f"addmeta -c {wd}/addmetalist -v --fnregex='oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'")
+    runcmd(rf"addmeta -c {wd}/addmetalist -v --fnregex='oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'")
 
     for filename in filenames:
         filepath = wd / filename
@@ -161,7 +161,7 @@ def test_filename_regex_sorted(make_nc, filenames, expected):
         os.makedirs(filepath.parent, exist_ok=True)
         shutil.copy(testfile, filepath)
 
-    runcmd(f"addmeta -c {wd}/addmetalist -v --sort --fnregex='oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'")
+    runcmd(rf"addmeta -c {wd}/addmetalist -v --sort --fnregex='oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'")
 
     for filename in filenames:
         filepath = wd / filename
