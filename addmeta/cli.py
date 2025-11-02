@@ -82,7 +82,10 @@ def resolve_relative_paths(files, base_path):
     """
     resolved = []
     for file in files:
-        resolved.extend([str(f) for f in base_path.glob(file)])
+        if os.path.isabs(file):
+            resolved.extend(glob(file))
+        else:
+            resolved.extend([str(f) for f in base_path.glob(file)])
     return resolved
 
 def main_parse_args(args):
