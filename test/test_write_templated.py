@@ -18,13 +18,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 import netCDF4 as nc
 import pytest
 
-from addmeta import read_yaml, dict_merge, combine_meta, add_meta, find_and_add_meta, skip_comments, list_from_file
+from addmeta import read_yaml, dict_merge, combine_meta, add_meta, find_and_add_meta, skip_comments, list_from_file, isoformat
 from common import runcmd, make_nc, get_meta_data_from_file
 
 verbose = True
@@ -53,7 +53,8 @@ def test_add_templated_meta(make_nc):
     ncfile = 'test/test.nc'
 
     size_before = str(Path(ncfile).stat().st_size)
-    mtime_before = datetime.fromtimestamp(Path(ncfile).stat().st_mtime).isoformat()
+    # Format mtime using our tweaked isoformat function
+    mtime_before = isoformat(datetime.fromtimestamp(Path(ncfile).stat().st_mtime, tz=timezone.utc))
 
     add_meta(ncfile, dict1, {})
 
@@ -276,5 +277,29 @@ def test_add_variable_metadata(make_nc, filename, metadata, expected):
     if 'variables' in expected:
         for varname, var_attrs in expected['variables'].items():
             assert var_attrs == get_meta_data_from_file(new_filepath, var=varname)
+
+    runcmd(f'rm {new_filepath}')
+
+def test_now(make_nc):
+    """
+    Test the built-in 'now' metadata template
+    """
+    metadata = {
+        'global': 
+        {
+            'date_metadata_modified': '{{ now }}',
+            'date_modified': '{{ mtime }}',
+        },
+    }
+    orig_filepath, new_filepath = make_nc, f"test/now.nc"
+    runcmd(f'cp {orig_filepath} {new_filepath}')
+
+    # Add metadata
+    find_and_add_meta([new_filepath], metadata, [])
+
+    # Confirm that 'now' is isoformat-ed and close to the current time
+    meta_now = datetime.fromisoformat(get_meta_data_from_file(new_filepath)['date_metadata_modified'])
+    utc_now = datetime.now(timezone.utc)
+    assert meta_now - utc_now < timedelta(minutes=1)
 
     runcmd(f'rm {new_filepath}')
