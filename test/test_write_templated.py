@@ -298,7 +298,9 @@ def test_now(make_nc):
     find_and_add_meta([new_filepath], metadata, [])
 
     # Confirm that 'now' is isoformat-ed and close to the current time
-    meta_now = datetime.fromisoformat(get_meta_data_from_file(new_filepath)['date_metadata_modified'])
+    # fromisoformat doesn't support this format until python3.11
+    now_str = get_meta_data_from_file(new_filepath)['date_metadata_modified']
+    meta_now = datetime.strptime(now_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
     utc_now = datetime.now(timezone.utc)
     assert meta_now - utc_now < timedelta(minutes=1)
 
