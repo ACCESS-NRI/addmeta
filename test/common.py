@@ -36,13 +36,11 @@ def runcmd(cmd, rwd=None):
     subprocess.check_call(shlex.split(cmd),stderr=subprocess.STDOUT, cwd=cwd)
 
 @pytest.fixture
-def make_nc():
-    ncfilename = 'test/test.nc'
+def make_nc(tmp_path):
+    ncfilename = f'{tmp_path}/test.nc'
     cmd = f"ncgen -o {ncfilename} test/test.cdl"
     runcmd(cmd)
-    yield ncfilename
-    cmd = "rm test/test.nc"
-    runcmd(cmd)
+    return ncfilename
 
 def get_meta_data_from_file(fname, var=None):
 

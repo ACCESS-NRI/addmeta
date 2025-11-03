@@ -47,20 +47,18 @@ def test_read_templated_yaml():
     )
            
 def test_add_templated_meta(make_nc):
-    
     dict1 = read_yaml("test/meta_template.yaml")
 
-    ncfile = 'test/test.nc'
+    size_before = str(Path(make_nc).stat().st_size)
 
-    size_before = str(Path(ncfile).stat().st_size)
     # Format mtime using our tweaked isoformat function
-    mtime_before = isoformat(datetime.fromtimestamp(Path(ncfile).stat().st_mtime, tz=timezone.utc))
+    mtime_before = isoformat(datetime.fromtimestamp(Path(make_nc).stat().st_mtime, tz=timezone.utc))
 
-    add_meta(ncfile, dict1, {})
+    add_meta(make_nc, dict1, {})
 
-    dict2 = get_meta_data_from_file(ncfile)
+    dict2 = get_meta_data_from_file(make_nc)
 
-    ncfile_path = Path(ncfile).absolute()
+    ncfile_path = Path(make_nc).absolute()
 
     assert(dict2["Publisher"] == "ACCESS-NRI")
     assert(dict2["Year"] == 2025)
@@ -76,14 +74,12 @@ def test_undefined_meta(make_nc):
 
     dict1 = read_yaml("test/meta_undefined.yaml")
 
-    ncfile = 'test/test.nc'
-
     # Missing template variable should throw a warning
     with pytest.warns(UserWarning, match="Skip setting attribute 'foo': 'bar' is undefined"):
-        add_meta(ncfile, dict1, {})
+        add_meta(make_nc, dict1, {})
 
     # Attribute using missing template variable should not be present in output file
-    dict2 = get_meta_data_from_file(ncfile)
+    dict2 = get_meta_data_from_file(make_nc)
     assert( not 'foo' in dict2 )
 
 @pytest.mark.parametrize(
@@ -184,27 +180,24 @@ def test_undefined_meta(make_nc):
     ]
 )
 @pytest.mark.filterwarnings("ignore:Skip setting attribute \'variable\'")
-def test_find_add_filename_metadata(make_nc, ncfiles, metadata, fnregexs, expected):
+def test_find_add_filename_metadata(make_nc, tmp_path, ncfiles, metadata, fnregexs, expected):
     
     # Make paths relative to test directory and make copy
     # of test.nc for each filename
-    ncfiles = [str('test' / Path(file)) for file in ncfiles]
+    ncfiles = [str(tmp_path / Path(file)) for file in ncfiles]
     for file in ncfiles:
-        runcmd(f'cp test/test.nc {file}')
+        runcmd(f'cp {make_nc} {file}')
 
     # Add metadata extracted from filename
     find_and_add_meta(ncfiles, metadata, fnregexs)
 
     for (file, expectation) in zip(ncfiles, expected):
         assert expectation == get_meta_data_from_file(file)
-        # Clean-up
-        runcmd(f'rm {file}')
 
 @pytest.mark.parametrize(
-    "filename,metadata,expected",
+    "metadata,expected",
     [
         pytest.param( # Test updating a variable's attr
-            'variable_attr.nc',
             {
                 'variables':
                 {
@@ -225,7 +218,6 @@ def test_find_add_filename_metadata(make_nc, ncfiles, metadata, fnregexs, expect
             },
         ),
         pytest.param( # Test setting attrs that depends on another attr
-            'dependant_attr.nc',
             {
                 'global': 
                 {
@@ -243,7 +235,6 @@ def test_find_add_filename_metadata(make_nc, ncfiles, metadata, fnregexs, expect
             },
         ),
         pytest.param( # Test setting attrs that depends on list attr
-            'dependant_list_attr.nc',
             {
                 'global': 
                 {
@@ -262,23 +253,18 @@ def test_find_add_filename_metadata(make_nc, ncfiles, metadata, fnregexs, expect
         ),
     ]
 )
-def test_add_variable_metadata(make_nc, filename, metadata, expected):
-    orig_filepath, new_filepath = make_nc, f"test/{filename}"
-    runcmd(f'cp {orig_filepath} {new_filepath}')
-
+def test_add_variable_metadata(make_nc, metadata, expected):
     # Add metadata
-    find_and_add_meta([new_filepath], metadata, [])
+    find_and_add_meta([make_nc], metadata, [])
 
     # Confirm that the global metadata has been updated
     if 'global' in expected:
-        assert expected['global'] == get_meta_data_from_file(new_filepath)
+        assert expected['global'] == get_meta_data_from_file(make_nc)
 
     # Confirm that the variable metadata has been updated
     if 'variables' in expected:
         for varname, var_attrs in expected['variables'].items():
-            assert var_attrs == get_meta_data_from_file(new_filepath, var=varname)
-
-    runcmd(f'rm {new_filepath}')
+            assert var_attrs == get_meta_data_from_file(make_nc, var=varname)
 
 def test_now(make_nc):
     """
@@ -288,20 +274,15 @@ def test_now(make_nc):
         'global': 
         {
             'date_metadata_modified': '{{ now }}',
-            'date_modified': '{{ mtime }}',
         },
     }
-    orig_filepath, new_filepath = make_nc, f"test/now.nc"
-    runcmd(f'cp {orig_filepath} {new_filepath}')
 
     # Add metadata
-    find_and_add_meta([new_filepath], metadata, [])
+    find_and_add_meta([make_nc], metadata, [])
 
     # Confirm that 'now' is isoformat-ed and close to the current time
     # fromisoformat doesn't support this format until python3.11
-    now_str = get_meta_data_from_file(new_filepath)['date_metadata_modified']
+    now_str = get_meta_data_from_file(make_nc)['date_metadata_modified']
     meta_now = datetime.strptime(now_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
     utc_now = datetime.now(timezone.utc)
     assert meta_now - utc_now < timedelta(minutes=1)
-
-    runcmd(f'rm {new_filepath}')
