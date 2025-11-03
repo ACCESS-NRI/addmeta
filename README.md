@@ -64,6 +64,7 @@ number of pre-populated variables:
 |`parent`|Parent directory of the netCDF file|
 |`name`|Filename of the netCDF file|
 |`fullpath`|Full path of the netCDF file|
+|`now`|The datetime addmeta is run|
 
 These variables can be used in a metadata file like so:
 
@@ -75,6 +76,7 @@ global:
     filename: "{{ name }}"
     size: "{{ size }}"
     modification_time: "{{ mtime }}"
+    date_metadata_modified: "{{ now }}"
 ```
 
 > [!CAUTION]
