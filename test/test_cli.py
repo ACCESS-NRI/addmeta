@@ -27,7 +27,7 @@ from common import runcmd
 
 @pytest.fixture
 def touch_nc():
-    files =  ['test/ocean_2.nc', 'test/ocean_1.nc', 'test/ice_hourly.nc']
+    files =  ['test/ocean_1.nc', 'test/ocean_2.nc', 'test/ice_hourly.nc']
     runcmd('touch '+" ".join(files))
     yield files
     runcmd('rm '+" ".join(files))
@@ -50,17 +50,30 @@ def test_cmdlinearg_from_file(mock_main, touch_nc):
 
     assert addmeta.cli.main_parse_args(args) == True
 
-    all_args = Namespace(
+    all_args = vars(Namespace(
               cmdlineargs=None, 
               metafiles=['anotherfile', 'test/meta1.yaml', 'test/meta2.yaml'], 
               metalist=None, 
               fnregex=["'\\d{3]\\.'", "'(?:group\\d{3])\\.nc'"], 
               sort=False,
               verbose=False, 
-              files=touch_nc[0:2],
-              )
+              # Reverse to ensure reordering check below works
+              files=touch_nc[0:2][::-1],
+              ))
 
-    mock_main.assert_called_once_with(all_args)
+    # This no longer works with python 3.14, ordering get scrambled
+    # mock_main.assert_called_once_with(all_args)
+    mock_main.assert_called_once()
+
+    # So have to iterate over called args and remove ordering dependence
+    called_args = vars(mock_main.call_args.args[0])
+    for k,v in all_args.items():
+        if v is None:
+            assert called_args[k] is None 
+        if isinstance(v, dict) or isinstance(v, list):
+            assert set(v) == set(called_args[k])
+        else:
+            assert v == called_args[k]
 
 def test_missing_cmdlinearg_file():
 
