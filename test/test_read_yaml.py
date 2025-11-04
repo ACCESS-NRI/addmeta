@@ -107,56 +107,47 @@ def test_list_from_file():
     assert(filelist == [Path('test/meta1.yaml'), Path('test/meta2.yaml')])
            
 def test_add_meta(make_nc):
-
-    ncfile = 'test/test.nc'
-    
     dict1 = read_yaml("test/meta1.yaml")
-    add_meta(ncfile, dict1, {})
+    add_meta(make_nc, dict1, {})
 
-    assert(dict1_in_dict2(dict1["global"], get_meta_data_from_file(ncfile)))
+    assert(dict1_in_dict2(dict1["global"], get_meta_data_from_file(make_nc)))
 
     dict1 = read_yaml("test/meta_var1.yaml")
-    add_meta(ncfile, dict1, {})
+    add_meta(make_nc, dict1, {})
 
     for var in dict1["variables"]:
-        assert(dict1_in_dict2(dict1["variables"][var], get_meta_data_from_file(ncfile,var)))
+        assert(dict1_in_dict2(dict1["variables"][var], get_meta_data_from_file(make_nc, var)))
 
 def test_find_add_meta(make_nc):
-    
-    ncfile = 'test/test.nc'
-
-    find_and_add_meta( [ncfile], combine_meta(['test/meta2.yaml','test/meta1.yaml']), {})
+    find_and_add_meta( [make_nc], combine_meta(['test/meta2.yaml','test/meta1.yaml']), {})
 
     dict1 = read_yaml("test/meta1.yaml")
-    assert(dict1_in_dict2(dict1["global"], get_meta_data_from_file(ncfile)))
+    assert(dict1_in_dict2(dict1["global"], get_meta_data_from_file(make_nc)))
 
-    find_and_add_meta( [ncfile], combine_meta(['test/meta_var1.yaml']), {} )
+    find_and_add_meta( [make_nc], combine_meta(['test/meta_var1.yaml']), {} )
 
     dict1 = read_yaml("test/meta_var1.yaml")
 
     for var in dict1["variables"]:
-        assert(dict1_in_dict2(dict1["variables"][var], get_meta_data_from_file(ncfile,var)))
+        assert(dict1_in_dict2(dict1["variables"][var], get_meta_data_from_file(make_nc, var)))
 
 def test_del_attributes(make_nc):
-    
-    ncfile = 'test/test.nc'
-
-    attributes = get_meta_data_from_file(ncfile)
+    attributes = get_meta_data_from_file(make_nc)
     assert( 'unlikelytobeoverwritten' in attributes )
     assert( 'Tiddly' not in attributes )
 
-    attributes = get_meta_data_from_file(ncfile, 'temp')
+    attributes = get_meta_data_from_file(make_nc, 'temp')
     assert( '_FillValue' in attributes )
     assert( 'Tiddly' not in attributes )
 
-    find_and_add_meta( [ncfile], combine_meta(['test/meta_del.yaml']), {})
+    find_and_add_meta( [make_nc], combine_meta(['test/meta_del.yaml']), {})
 
-    attributes = get_meta_data_from_file(ncfile)
+    attributes = get_meta_data_from_file(make_nc)
     assert( 'unlikelytobeoverwritten' not in attributes )
     assert( 'Tiddly' in attributes )
     assert( 'A long impressive sounding name' == attributes['Publisher'] )
 
-    attributes = get_meta_data_from_file(ncfile, 'temp')
+    attributes = get_meta_data_from_file(make_nc, 'temp')
     assert( '_FillValue' not in attributes )
     assert( 'Tiddly' in attributes )
     assert( 'Kelvin' == attributes['units'] )

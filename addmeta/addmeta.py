@@ -6,7 +6,7 @@ from __future__ import print_function
 from collections import defaultdict
 from collections.abc import Mapping
 import csv
-from datetime import datetime
+from datetime import datetime, timezone
 import io
 from pathlib import Path
 import re
@@ -80,12 +80,16 @@ def add_meta(ncfile, metadict, template_vars, sort_attrs=False, verbose=False):
     for key in ["mtime", "size"]:
         template_vars[key] = getattr(ncpath_stat, 'st_'+key)
 
-    template_vars['mtime'] = datetime.fromtimestamp(template_vars['mtime']).isoformat()
+    # mtime should be a posix timestamp and thus in UTC
+    template_vars['mtime'] = isoformat(datetime.fromtimestamp(template_vars['mtime'], tz=timezone.utc))
 
     # Pre-populate from pathlib API
     template_vars['parent'] = ncpath.absolute().parent
     template_vars['name'] = ncpath.name
     template_vars['fullpath'] = str(ncpath.absolute())
+
+    # Now (e.g. for date_metadata_modified)
+    template_vars['now'] = isoformat(datetime.now(timezone.utc))
 
     rootgrp = nc.Dataset(ncfile, "r+")
     # Add metadata to matching variables
@@ -221,3 +225,12 @@ def order_dict(unsorted):
     Return dict sorted by key, case-insensitive
     """
     return dict(sorted(unsorted.items(), key=lambda item: item[0].casefold()))
+
+def isoformat(dt):
+    """
+    Return a string representing the datetime using ISO8601 with second precision
+    and with 'Z' instead of '+00:00' for UTC/Zulu time.
+
+    If timezone is not present or not '+00:00' then do nothing to the timezone.
+    """
+    return dt.isoformat(timespec='seconds').replace('+00:00', 'Z')
