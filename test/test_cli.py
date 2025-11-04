@@ -27,7 +27,7 @@ from common import runcmd
 
 @pytest.fixture
 def touch_nc():
-    files =  ['test/ocean_1.nc', 'test/ocean_2.nc', 'test/ice_hourly.nc']
+    files =  ['test/ocean_2.nc', 'test/ocean_1.nc', 'test/ice_hourly.nc']
     runcmd('touch '+" ".join(files))
     yield files
     runcmd('rm '+" ".join(files))
@@ -50,13 +50,15 @@ def test_cmdlinearg_from_file(mock_main, touch_nc):
 
     assert addmeta.cli.main_parse_args(args) == True
 
-    all_args = Namespace(metafiles=['anotherfile', 'test/meta1.yaml', 'test/meta2.yaml'], 
-              metalist=None, 
+    all_args = Namespace(
               cmdlineargs=None, 
+              metafiles=['anotherfile', 'test/meta1.yaml', 'test/meta2.yaml'], 
+              metalist=None, 
               fnregex=["'\\d{3]\\.'", "'(?:group\\d{3])\\.nc'"], 
-              verbose=False, 
               sort=False,
-              files=touch_nc[0:2])
+              verbose=False, 
+              files=touch_nc[0:2],
+              )
 
     mock_main.assert_called_once_with(all_args)
 
