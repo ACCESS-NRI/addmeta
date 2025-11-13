@@ -28,7 +28,7 @@ import shutil
 import jinja2
 
 from addmeta import cli
-from common import runcmd, get_meta_data_from_file
+from common import runcmd, get_meta_data_from_file, make_nc as make_nc_common
 
 @pytest.fixture
 def make_nc():
@@ -236,3 +236,55 @@ def test_filename_regex_sorted(make_nc, filenames, expected):
 
         # Confirm order is as expected
         assert list(expected[filename].keys()) == list(actual.keys())
+
+@pytest.mark.parametrize(
+    "metadata_files_list,expected",
+    [
+        pytest.param(
+            # Try with just one file - reuse yaml from another test
+            ['test/meta_simple1.yaml'],
+            {
+                'unlikelytobeoverwritten': "total rubbish",
+                'Publisher': "Will be overwritten",
+                'a': 'ay'
+            }
+        ),
+        pytest.param(
+            # Try with two files
+            ['test/meta_simple1.yaml', 'test/meta_simple2.yaml'],
+            {
+                'unlikelytobeoverwritten': "total rubbish",
+                'Publisher': "Will be overwritten",
+                'a': 'ay',
+                'b': 'bee'
+            }
+        ),
+        pytest.param(
+            # Try with three files
+            ['test/meta_simple1.yaml', 'test/meta_simple2.yaml', 'test/meta_simple3.yaml'],
+            {
+                'unlikelytobeoverwritten': "total rubbish",
+                'Publisher': "Will be overwritten",
+                'a': 'ay',
+                'b': 'bee',
+                'c': 'cee'
+            }
+        ),
+    ]
+)
+def test_multiple_metadata_files(tmp_path, make_nc_common, metadata_files_list, expected):
+    testfile = make_nc_common
+    
+    # Write list of metadata files to another file
+    filelist_path = f'{tmp_path}/filelist'
+    with open(filelist_path, 'w') as f:
+        for metadata_file in metadata_files_list:
+            metadata_path = Path(metadata_file)
+            f.write(f"{metadata_path.absolute()}\n")
+
+    runcmd(rf"addmeta -v -l {filelist_path} {testfile}")
+
+    actual = get_meta_data_from_file(testfile)
+
+    # Confirm contents are intact
+    assert expected == actual
