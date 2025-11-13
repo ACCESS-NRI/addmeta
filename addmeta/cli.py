@@ -52,7 +52,7 @@ def main(args):
 
     if (args.metalist is not None):
         for line in args.metalist:
-            metafiles.extend(list_from_file(listfile))
+            metafiles.extend(list_from_file(line))
 
     if (args.metafiles is not None):
         metafiles.extend(args.metafiles)

@@ -28,7 +28,7 @@ import shutil
 import jinja2
 
 from addmeta import cli
-from common import runcmd, get_meta_data_from_file
+from common import runcmd, get_meta_data_from_file, make_nc as make_nc_common
 
 @pytest.fixture
 def make_nc():
@@ -236,3 +236,74 @@ def test_filename_regex_sorted(make_nc, filenames, expected):
 
         # Confirm order is as expected
         assert list(expected[filename].keys()) == list(actual.keys())
+
+@pytest.mark.parametrize(
+    "metadata_files_lists,expected",
+    [
+        pytest.param(
+            # Try with just one metadata file
+            [['test/meta_simple1.yaml']],
+            {
+                'unlikelytobeoverwritten': "total rubbish",
+                'Publisher': "Will be overwritten",
+                'a': 'ay'
+            }
+        ),
+        pytest.param(
+            # Try with two metadata files in the same file
+            [['test/meta_simple1.yaml', 'test/meta_simple2.yaml']],
+            {
+                'unlikelytobeoverwritten': "total rubbish",
+                'Publisher': "Will be overwritten",
+                'a': 'ay',
+                'b': 'bee'
+            }
+        ),
+        pytest.param(
+            # Try with two metadata files in different files
+            [['test/meta_simple1.yaml'], ['test/meta_simple2.yaml']],
+            {
+                'unlikelytobeoverwritten': "total rubbish",
+                'Publisher': "Will be overwritten",
+                'a': 'ay',
+                'b': 'bee'
+            }
+        ),
+        pytest.param(
+            # Try with three files split over two files
+            [['test/meta_simple1.yaml'], ['test/meta_simple2.yaml', 'test/meta_simple3.yaml']],
+            {
+                'unlikelytobeoverwritten': "total rubbish",
+                'Publisher': "Will be overwritten",
+                'a': 'ay',
+                'b': 'bee',
+                'c': 'cee'
+            }
+        ),
+    ]
+)
+def test_multiple_metadata_files(tmp_path, make_nc_common, metadata_files_lists, expected):
+    testfile = make_nc_common
+    
+    # Write list of metadata files to file
+    filelist_paths = []
+    for i, metadata_files_list in enumerate(metadata_files_lists):
+        filelist_path = f'{tmp_path}/filelist_{i}'
+        with open(filelist_path, 'w') as f:
+            for metadata_file in metadata_files_list:
+                metadata_path = Path(metadata_file)
+                f.write(f"{metadata_path.absolute()}\n")
+        
+        filelist_paths.append(filelist_path)
+
+    assert len(filelist_paths) > 0, "Test requires at least one metadata file"
+    filelist_str = " -l ".join(filelist_paths)
+
+    cmd_str = f"addmeta -v -l {filelist_str} {testfile}"
+
+    runcmd(cmd_str)
+
+    actual = get_meta_data_from_file(testfile)
+
+    # Confirm contents are intact
+    assert expected == actual
