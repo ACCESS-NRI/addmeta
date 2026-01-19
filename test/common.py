@@ -19,8 +19,10 @@ limitations under the License.
 """
 
 from pathlib import Path
+import os
 import shlex
 import subprocess
+import yaml
 
 import netCDF4 as nc
 import pytest
@@ -41,6 +43,17 @@ def make_nc(tmp_path):
     cmd = f"ncgen -o {ncfilename} test/test.cdl"
     runcmd(cmd)
     return ncfilename
+
+@pytest.fixture
+def make_env_data():
+    env = dict(os.environ)
+    env['PAYU_RUN_ID'] = '0d1e048'
+    fname = Path('test/examples/env.yaml')
+    with open(fname, 'w') as outfile:
+        yaml.dump(env, outfile)
+
+    yield fname
+    fname.unlink()
 
 def get_meta_data_from_file(fname, var=None):
 

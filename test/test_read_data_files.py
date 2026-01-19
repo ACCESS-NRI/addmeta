@@ -19,28 +19,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import copy
-import os
 from pathlib import Path
-import yaml
 
-import pytest
 import netCDF4 as nc
 
-import addmeta
 from addmeta import load_data_files
-
-
-@pytest.fixture
-def make_env_data():
-    env = dict(os.environ)
-    env['PAYU_RUN_ID'] = '0d1e048'
-    fname = Path('test/examples/env.yaml')
-    with open(fname, 'w') as outfile:
-        yaml.dump(env, outfile)
-
-    yield fname
-    fname.unlink()
+from common import make_env_data
 
 def test_read_datafile():
 
