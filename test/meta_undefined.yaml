@@ -1,5 +1,5 @@
 global:
     Publisher: "ACCESS-NRI"
-    directory: "{{ parent }}"
-    filename: "{{ name }}"
+    directory: "{{ __file__.parent }}"
+    filename: "{{ __file__.name }}"
     foo: "{{ bar }}"

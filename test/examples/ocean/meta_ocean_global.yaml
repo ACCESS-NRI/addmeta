@@ -1,9 +1,9 @@
 global:
     help: "I need somebody"
     model_version: "2.1"
-    date_created: "{{ mtime }}" 
+    date_created: "{{ __file__.mtime }}" 
     realm: "ocean"
-    frequency: "{{ frequency }}"
+    frequency: "{{ __file__.frequency }}"
     notes: 
     description: 
     created:

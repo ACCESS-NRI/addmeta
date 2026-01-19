@@ -1,8 +1,8 @@
 global:
     Publisher: "ACCESS-NRI"
-    directory: "{{ parent }}"
-    fullpath: "{{ fullpath }}"
+    directory: "{{ __file__.parent }}"
+    fullpath: "{{ __file__.fullpath }}"
     Year: 2025
-    filename: "{{ name }}"
-    size: "{{ size }}"
-    modification_time: "{{ mtime }}"
+    filename: "{{ __file__.name }}"
+    size: "{{ __file__.size }}"
+    modification_time: "{{ __file__.mtime }}"

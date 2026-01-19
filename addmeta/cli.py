@@ -24,7 +24,7 @@ import os
 from pathlib import Path
 import sys
 
-from addmeta import find_and_add_meta, combine_meta, list_from_file, skip_comments
+from addmeta import find_and_add_meta, combine_meta, list_from_file, skip_comments, load_data_files
 
 def parse_args(args):
     """
@@ -36,6 +36,7 @@ def parse_args(args):
     parser.add_argument("-c","--cmdlineargs", help="File containing a list of command-line arguments", action='store')
     parser.add_argument("-m","--metafiles", help="One or more meta-data files in YAML format", action='append')
     parser.add_argument("-l","--metalist", help="File containing a list of meta-data files", action='append')
+    parser.add_argument("-d","--datafiles", help="One or more key/value data files in YAML format", action='append')
     parser.add_argument("-f","--fnregex", help="Extract metadata from filename using regex", default=[], action='append')
     parser.add_argument("-s","--sort", help="Sort all keys lexicographically, ignoring case", action="store_true")
     parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
@@ -49,6 +50,11 @@ def main(args):
     """
     metafiles = []
     verbose = args.verbose
+    kwdata = {}
+
+    if (args.datafiles is not None):
+        if verbose: print("datafiles: "," ".join([str(f) for f in arg.datafiles]))
+        kwdata = load_data_files(args.datafiles)
 
     if (args.metalist is not None):
         for line in args.metalist:
@@ -59,7 +65,7 @@ def main(args):
 
     if verbose: print("metafiles: "," ".join([str(f) for f in metafiles]))
 
-    find_and_add_meta(args.files, combine_meta(metafiles), args.fnregex, args.sort, verbose)
+    find_and_add_meta(args.files, combine_meta(metafiles), kwdata, args.fnregex, args.sort, verbose)
 
 def safe_join_lists(list1, list2):
     """

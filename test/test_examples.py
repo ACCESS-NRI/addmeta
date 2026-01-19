@@ -88,8 +88,8 @@ def make_nc():
              },
              'oceanbgc-3d-zprod_gross-1monthly-mean-ym_0792_01.nc':
              {
-		        'Publisher': "Will be overwritten",
-		        'contact': "Add your name here" ,
+                'Publisher': "Will be overwritten",
+                'contact': "Add your name here" ,
                 'email': "Add your email address here" ,
                 'realm': "ocean" ,
                 'nominal_resolution': "100 km" ,
@@ -118,7 +118,8 @@ def test_filename_regex(make_nc, filenames, expected):
         os.makedirs(filepath.parent, exist_ok=True)
         shutil.copy(testfile, filepath)
 
-    runcmd(rf"addmeta -c {wd}/addmetalist -v --fnregex='oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'")
+    runcmd(rf"addmeta -v -c {wd}/addmetalist -v --fnregex='oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'")
+    # cli.main_parse_args(" ".split(rf"addmeta -v -c {wd}/addmetalist -v --fnregex='oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'"))
 
     for filename in filenames:
         filepath = wd / filename

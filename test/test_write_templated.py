@@ -24,24 +24,24 @@ from pathlib import Path
 import netCDF4 as nc
 import pytest
 
-from addmeta import read_yaml, dict_merge, combine_meta, add_meta, find_and_add_meta, skip_comments, list_from_file, isoformat
+from addmeta import read_yaml, read_metadata, dict_merge, combine_meta, add_meta, find_and_add_meta, skip_comments, list_from_file, isoformat
 from common import runcmd, make_nc, get_meta_data_from_file
 
 verbose = True
 
 def test_read_templated_yaml():
 
-    dict1 = read_yaml("test/meta_template.yaml")
+    dict1 = read_metadata("test/meta_template.yaml")
 
     assert(dict1 == {
         'global': {
             'Publisher': 'ACCESS-NRI', 
             'Year': 2025,
-            'filename': "{{ name }}",
-            'size': "{{ size }}",
-            'directory': "{{ parent }}",
-            'fullpath': "{{ fullpath }}",
-            'modification_time': "{{ mtime }}",
+            'filename': "{{ __file__.name }}",
+            'size': "{{ __file__.size }}",
+            'directory': "{{ __file__.parent }}",
+            'fullpath': "{{ __file__.fullpath }}",
+            'modification_time': "{{ __file__.mtime }}",
         }
         }
     )
@@ -54,7 +54,7 @@ def test_add_templated_meta(make_nc):
     # Format mtime using our tweaked isoformat function
     mtime_before = isoformat(datetime.fromtimestamp(Path(make_nc).stat().st_mtime, tz=timezone.utc))
 
-    add_meta(make_nc, dict1, {})
+    find_and_add_meta([make_nc], dict1, {}, {})
 
     dict2 = get_meta_data_from_file(make_nc)
 
@@ -94,8 +94,8 @@ def test_undefined_meta(make_nc):
                 'Year': 2025,
                 'unlikelytobeoverwritten': None,
                 'Publisher': 'ACCESS-NRI',
-                'model': '{{ model }}',
-                'frequency': '{{ frequency }}',
+                'model': '{{ __file__.model }}',
+                'frequency': '{{ __file__.frequency }}',
                 }, 
             },
             [
@@ -127,9 +127,9 @@ def test_undefined_meta(make_nc):
                 'Year': 2025,
                 'unlikelytobeoverwritten': None,
                 'Publisher': 'ACCESS-NRI',
-                'reduction': '{{ reduction }}',
-                'frequency': '{{ frequency }}',
-                'variable': '{{ variable }}',
+                'reduction': '{{ __file__.reduction }}',
+                'frequency': '{{ __file__.frequency }}',
+                'variable': '{{ __file__.variable }}',
                 }, 
             },
             [
@@ -164,7 +164,7 @@ def test_undefined_meta(make_nc):
                     'Year': 2025,
                     'unlikelytobeoverwritten': None,
                     'Publisher': 'ACCESS-NRI',
-                    'frequency': '{{ frequency }}',
+                    'frequency': '{{ __file__.frequency }}',
                 }, 
             },
             [
@@ -189,7 +189,7 @@ def test_find_add_filename_metadata(make_nc, tmp_path, ncfiles, metadata, fnrege
         runcmd(f'cp {make_nc} {file}')
 
     # Add metadata extracted from filename
-    find_and_add_meta(ncfiles, metadata, fnregexs)
+    find_and_add_meta(ncfiles, metadata, {}, fnregexs)
 
     for (file, expectation) in zip(ncfiles, expected):
         assert expectation == get_meta_data_from_file(file)
@@ -222,7 +222,7 @@ def test_find_add_filename_metadata(make_nc, tmp_path, ncfiles, metadata, fnrege
                 'global': 
                 {
                     'a': 'a',
-                    'b': '{{ a }}',
+                    # 'b': '{{ a }}', no longer supported
                 },
             },
             {
@@ -230,7 +230,7 @@ def test_find_add_filename_metadata(make_nc, tmp_path, ncfiles, metadata, fnrege
                     'unlikelytobeoverwritten': 'total rubbish',
                     'Publisher': "Will be overwritten",
                     'a': 'a',
-                    'b': 'a',
+                    # 'b': 'a',
                 }
             },
         ),
@@ -239,7 +239,7 @@ def test_find_add_filename_metadata(make_nc, tmp_path, ncfiles, metadata, fnrege
                 'global': 
                 {
                     'a': ['1', '2', '3'],
-                    'b': '{{ a }}',
+                    # 'b': '{{ a }}', No longer supported
                 },
             },
             {
@@ -247,7 +247,7 @@ def test_find_add_filename_metadata(make_nc, tmp_path, ncfiles, metadata, fnrege
                     'unlikelytobeoverwritten': 'total rubbish',
                     'Publisher': "Will be overwritten",
                     'a': '1,2,3',
-                    'b': '1,2,3',
+                    # 'b': '1,2,3',
                 }
             },
         ),
@@ -255,7 +255,7 @@ def test_find_add_filename_metadata(make_nc, tmp_path, ncfiles, metadata, fnrege
 )
 def test_add_variable_metadata(make_nc, metadata, expected):
     # Add metadata
-    find_and_add_meta([make_nc], metadata, [])
+    find_and_add_meta([make_nc], metadata, {}, [])
 
     # Confirm that the global metadata has been updated
     if 'global' in expected:
@@ -273,12 +273,12 @@ def test_now(make_nc):
     metadata = {
         'global': 
         {
-            'date_metadata_modified': '{{ now }}',
+            'date_metadata_modified': '{{ __datetime__.now }}',
         },
     }
 
     # Add metadata
-    find_and_add_meta([make_nc], metadata, [])
+    find_and_add_meta([make_nc], metadata, {}, [])
 
     # Confirm that 'now' is isoformat-ed and close to the current time
     # fromisoformat doesn't support this format until python3.11

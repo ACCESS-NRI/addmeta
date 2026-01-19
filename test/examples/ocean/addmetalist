@@ -1,4 +1,4 @@
-# Re-use experiment level metadata
+# Use experiment level metadata
 -m=../metadata.yaml
 # Ocean model specific global metadata
 -m=meta_ocean_global.yaml
