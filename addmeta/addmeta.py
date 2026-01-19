@@ -208,7 +208,6 @@ def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, ver
         # Match supplied regex against filename and add metadata
         template_vars['__file__'] = match_filename_regex(fname, fnregexs, verbose)
 
-        # import pdb; pdb.set_trace()
         # Add file metadata
         template_vars['__file__'].update(get_file_metadata(fname))
 

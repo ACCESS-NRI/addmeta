@@ -119,7 +119,6 @@ def test_filename_regex(make_nc, filenames, expected):
         shutil.copy(testfile, filepath)
 
     runcmd(rf"addmeta -v -c {wd}/addmetalist -v --fnregex='oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'")
-    # cli.main_parse_args(" ".split(rf"addmeta -v -c {wd}/addmetalist -v --fnregex='oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'"))
 
     for filename in filenames:
         filepath = wd / filename

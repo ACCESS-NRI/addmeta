@@ -28,7 +28,7 @@ import netCDF4 as nc
 
 import addmeta
 from addmeta import read_metadata, dict_merge, combine_meta, add_meta, find_and_add_meta, skip_comments, list_from_file
-from common import runcmd, make_nc, get_meta_data_from_file, dict1_in_dict2
+from common import make_nc, get_meta_data_from_file, dict1_in_dict2
 
 verbose = True
 

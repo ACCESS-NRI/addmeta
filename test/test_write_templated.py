@@ -24,7 +24,7 @@ from pathlib import Path
 import netCDF4 as nc
 import pytest
 
-from addmeta import read_yaml, read_metadata, dict_merge, combine_meta, add_meta, find_and_add_meta, skip_comments, list_from_file, isoformat
+from addmeta import read_yaml, read_metadata, add_meta, find_and_add_meta, isoformat
 from common import runcmd, make_nc, get_meta_data_from_file
 
 verbose = True
