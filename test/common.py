@@ -27,6 +27,8 @@ import yaml
 import netCDF4 as nc
 import pytest
 
+payu_run_id = '0d1e048'
+    
 def runcmd(cmd, rwd=None):
     """
     Run a command, print stderr to stdout and optionally run in working
@@ -47,7 +49,7 @@ def make_nc(tmp_path):
 @pytest.fixture
 def make_env_data():
     env = dict(os.environ)
-    env['PAYU_RUN_ID'] = '0d1e048'
+    env['PAYU_RUN_ID'] = payu_run_id
     fname = Path('test/examples/env.yaml')
     with open(fname, 'w') as outfile:
         yaml.dump(env, outfile)

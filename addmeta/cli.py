@@ -53,7 +53,7 @@ def main(args):
     kwdata = {}
 
     if (args.datafiles is not None):
-        if verbose: print("datafiles: "," ".join([str(f) for f in arg.datafiles]))
+        if verbose: print("datafiles: "," ".join([str(f) for f in args.datafiles]))
         kwdata = load_data_files(args.datafiles)
 
     if (args.metalist is not None):
@@ -117,6 +117,10 @@ def main_parse_args(args):
         if new_parsed_args.metafiles is not None:
             new_parsed_args.metafiles = resolve_relative_paths(new_parsed_args.metafiles, cmdlinefile.parent)
 
+        # Convert relative paths in datafiles to be relative to cmdlineargs file
+        if new_parsed_args.datafiles is not None:
+            new_parsed_args.datafiles = resolve_relative_paths(new_parsed_args.datafiles, cmdlinefile.parent)
+
         # Expand (glob) patterns in positional arguments (files) and convert relative paths
         if new_parsed_args.files is not None:
             new_parsed_args.files = resolve_relative_paths(new_parsed_args.files, cmdlinefile.parent)
@@ -126,6 +130,7 @@ def main_parse_args(args):
         # adding logic here also
         parsed_args.files = safe_join_lists(parsed_args.files, new_parsed_args.files)
         parsed_args.metafiles = safe_join_lists(parsed_args.metafiles, new_parsed_args.metafiles)
+        parsed_args.datafiles = safe_join_lists(parsed_args.datafiles, new_parsed_args.datafiles)
         parsed_args.fnregex = safe_join_lists(parsed_args.fnregex, new_parsed_args.fnregex)
         parsed_args.verbose = parsed_args.verbose or new_parsed_args.verbose
         parsed_args.cmdlineargs = None
