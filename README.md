@@ -116,14 +116,14 @@ For example:
 With a datafile `job.yaml`
 ```yaml
 SHELL: '/bin/bash'
-id: '1234567'
+pbs_id: '1234567'
 ```
 and metadata file`meta.yaml`
 ```yaml
 global:
     license: 'CC-BY-4.0'
     shell: {{ job.SHELL }}
-    id: {{ job.id }}
+    id: {{ job.pbs_id }}
 ```
 and `addmeta` invoked like so
 ```bash
@@ -139,6 +139,10 @@ addmeta -d job.yaml -m meta.yaml file.nc
 This approach works particularly well when only a small subset of the data from 
 the datafile is required to be inserted into the file metadata, or when the value
 is required, but the key needs to be different.
+
+Multiple datafiles can be specified, and the variables from each will be accessible
+in a namespace defined by the 
+[stem of the filename](https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.stem).
 
 ## Invocation
 
