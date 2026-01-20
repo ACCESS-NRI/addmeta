@@ -40,43 +40,33 @@ specified. If the same attribute is defined more than once, the last attribute
 file specified takes precedence. Like cascading style sheets this means default
 values can be given and overridden when necessary. 
 
-### metadata.yaml support
-
-ACCESS-NRI models produce, and intake catalogues consume, a `metadata.yaml` file
-that is a series of key/value pairs (see 
-[schema](https://github.com/ACCESS-NRI/schema/tree/main/au.org.access-nri/model/output/experiment-metadata) 
-for details).
-
-Simple key/value pairs are supported by `addmeta` and are assumed to define global
-metadata.
-
 ### Dynamic templating
 
 `addmeta` supports limited dynamic templating to allow injection of file specific
 metadata in a general way. This is done using 
 [Jinja templating](https://jinja.palletsprojects.com/en/stable/) and providing a
-number of pre-populated variables:
+number of pre-populated variables in special namespaces (`__file__` and `__datetime__`):
 
 |variable| description|
 |----|----|
-|`mtime`|Last modification time|
-|`size`|File size (in bytes)|
-|`parent`|Parent directory of the netCDF file|
-|`name`|Filename of the netCDF file|
-|`fullpath`|Full path of the netCDF file|
-|`now`|The datetime addmeta is run|
+|`__file__.mtime`|Last modification time|
+|`__file__.size`|File size (in bytes)|
+|`__file__.parent`|Parent directory of the netCDF file|
+|`__file__.name`|Filename of the netCDF file|
+|`__file__.fullpath`|Full path of the netCDF file|
+|`__datetime__.now`|The datetime addmeta is run|
 
 These variables can be used in a metadata file like so:
 
 ```yaml
 global:
     Publisher: "ACCESS-NRI"
-    directory: "{{ parent }}"
+    directory: "{{ __file__.parent }}"
     Year: 2025
-    filename: "{{ name }}"
-    size: "{{ size }}"
-    modification_time: "{{ mtime }}"
-    date_metadata_modified: "{{ now }}"
+    filename: "{{ __file__.name }}"
+    size: "{{ __file__.size }}"
+    modification_time: "{{ __file__.mtime }}"
+    date_metadata_modified: "{{ __file__.now }}"
 ```
 
 > [!CAUTION]
@@ -102,13 +92,52 @@ access-om3.mom6.3d.agessc.1day.mean.1900-01.nc'
 ```
 the following regex:
 ```python
-r'.*\.(?P<frequency>.*)\.mean\.\d+-\d+\.nc$'
+r'.*\.(?P<freq>.*)\.mean\.\d+-\d+\.nc$'
 ```
-would match and set `frequency=1day`. It is possible to define more than one named
+would match and set `freq=1day`.  This could then be referred to like so
+```yaml
+    frequency: {{ __file__.freq }}
+```
+It is possible to define more than one named
 group in a regex, as long as the names are unique. It is also possible to specify multiple
 regex expressions, only those that match will return variables that can be used as 
 jinja template variables. Unused variables are ignored, and in the case of identical
 named groups in different regexs, later defined regexs override previous ones.
+
+## User defined template variables
+
+User defined template variables are supported as *datafiles*: yaml files with
+key/values. The keys are accessible through a namespace defined as the stem of
+the yaml file they are read from.
+
+For example:
+
+With `job.yaml`
+```yaml
+SHELL: '/bin/bash'
+id: '1234567'
+```
+and `meta.yaml`
+```yaml
+license: 'CC-BY-4.0'
+shell: {{ job.SHELL }}
+id: {{ job.id }}
+```
+
+And `addmeta` invoked like so
+```bash
+addmeta -d job.yaml -m meta.yaml file.nc
+```
+`file.nc` will have global metadata:
+```
+// global attributes:
+		:license = "CC-BY-4.0" ;
+		:id = "1234567";
+		:shell = "/bin/bash";
+```
+This approach works particularly well when only a small subset of the data from 
+the datafile is required to be inserted into the file metadata, or when the value
+is required, but the key needs to be different.
 
 ## Invocation
 
@@ -116,7 +145,7 @@ named groups in different regexs, later defined regexs override previous ones.
 a summay of how to invoke the program correctly.
 
     $ addmeta -h
-    usage: cli.py [-h] [-c CMDLINEARGS] [-m METAFILES] [-l METALIST] [-f FN_REGEX] [-v] files [files ...]
+    usage: addmeta [-h] [-c CMDLINEARGS] [-m METAFILES] [-l METALIST] [-d DATAFILES] [-f FNREGEX] [-s] [-v] [files ...]
 
     Add meta data to one or more netCDF files
 
@@ -131,8 +160,11 @@ a summay of how to invoke the program correctly.
                             One or more meta-data files in YAML format
     -l METALIST, --metalist METALIST
                             File containing a list of meta-data files
-    -f FN_REGEX, --fn-regex FN_REGEX
+    -d DATAFILES, --datafiles DATAFILES
+                            One or more key/value data files in YAML format
+    -f FNREGEX, --fnregex FNREGEX
                             Extract metadata from filename using regex
+    -s, --sort            Sort all keys lexicographically, ignoring case
     -v, --verbose         Verbose output
 
 
@@ -149,8 +181,8 @@ argument per line, to make it easy to read, and a `diff` of isolates the change.
 Whitespace and comments are stripped, so it is also possible to add useful comments.
 e.g.
 ```bash
-# Re-use experiment level metadata
--m=../metadata.yaml
+# Re-use experiment level metadata as template variables
+-d=../metadata.yaml
 # Ocean model specific global metadata
 -m=meta_ocean_global.yaml
 # Ocean model specific variable metadata
@@ -169,3 +201,17 @@ output/ocean_*.nc
 > does not allow mixing of command line options and positional arguments. So
 > all the references to netCDF files need to come at the end of the argument
 > list. 
+
+### metadata.yaml support
+
+ACCESS-NRI models produce, and intake catalogues consume, a `metadata.yaml` file
+that is a series of key/value pairs (see 
+[schema](https://github.com/ACCESS-NRI/schema/tree/main/au.org.access-nri/model/output/experiment-metadata) 
+for details).
+
+Simple key/value pairs are supported by `addmeta` and are assumed to define global
+metadata.
+
+This approach is best suited when most of the key/pairs of a `metadata.yaml` file
+will be used. When only a small number of fields are required it is best to use
+the user defined data templating approach described above.
