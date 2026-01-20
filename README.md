@@ -105,7 +105,7 @@ regex expressions, only those that match will return variables that can be used 
 jinja template variables. Unused variables are ignored, and in the case of identical
 named groups in different regexes, later defined regexes override previous ones.
 
-## User defined template variables
+### User defined template variables
 
 User defined template variables are supported as *datafiles*: yaml files with
 key/values. The keys are accessible through a namespace defined as the stem of
@@ -143,6 +143,20 @@ is required, but the key needs to be different.
 Multiple datafiles can be specified, and the variables from each will be accessible
 in a namespace defined by the 
 [stem of the filename](https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.stem).
+
+### metadata.yaml support
+
+ACCESS-NRI models produce, and intake catalogues consume, a `metadata.yaml` file
+that is a series of key/value pairs (see 
+[schema](https://github.com/ACCESS-NRI/schema/tree/main/au.org.access-nri/model/output/experiment-metadata) 
+for details).
+
+Simple key/value pairs are supported by `addmeta` and are assumed to define global
+metadata.
+
+This approach is best suited when most of the key/pairs of a `metadata.yaml` file
+will be used. When only a small number of fields are required it is best to use
+the user defined data templating approach described above.
 
 ## Invocation
 
@@ -206,17 +220,3 @@ output/ocean_*.nc
 > does not allow mixing of command line options and positional arguments. So
 > all the references to netCDF files need to come at the end of the argument
 > list. 
-
-### metadata.yaml support
-
-ACCESS-NRI models produce, and intake catalogues consume, a `metadata.yaml` file
-that is a series of key/value pairs (see 
-[schema](https://github.com/ACCESS-NRI/schema/tree/main/au.org.access-nri/model/output/experiment-metadata) 
-for details).
-
-Simple key/value pairs are supported by `addmeta` and are assumed to define global
-metadata.
-
-This approach is best suited when most of the key/pairs of a `metadata.yaml` file
-will be used. When only a small number of fields are required it is best to use
-the user defined data templating approach described above.
