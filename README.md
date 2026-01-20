@@ -84,7 +84,8 @@ to dynamic templating.
 
 Extracting the variable is done by specifying [python regular expressions with named
 groups](https://docs.python.org/3/howto/regex.html#non-capturing-and-named-groups), 
-and the group names become the metadata template variables.  e.g.
+and the group names become the metadata template variables, accessible in the `__file__` 
+namespace.  e.g.
 
 For the filename
 ```bash
@@ -102,7 +103,7 @@ It is possible to define more than one named
 group in a regex, as long as the names are unique. It is also possible to specify multiple
 regex expressions, only those that match will return variables that can be used as 
 jinja template variables. Unused variables are ignored, and in the case of identical
-named groups in different regexs, later defined regexs override previous ones.
+named groups in different regexes, later defined regexes override previous ones.
 
 ## User defined template variables
 
@@ -112,23 +113,23 @@ the yaml file they are read from.
 
 For example:
 
-With `job.yaml`
+With a datafile `job.yaml`
 ```yaml
 SHELL: '/bin/bash'
 id: '1234567'
 ```
-and `meta.yaml`
+and metadata file`meta.yaml`
 ```yaml
-license: 'CC-BY-4.0'
-shell: {{ job.SHELL }}
-id: {{ job.id }}
+global:
+    license: 'CC-BY-4.0'
+    shell: {{ job.SHELL }}
+    id: {{ job.id }}
 ```
-
-And `addmeta` invoked like so
+and `addmeta` invoked like so
 ```bash
 addmeta -d job.yaml -m meta.yaml file.nc
 ```
-`file.nc` will have global metadata:
+`file.nc` will have global metadata that looks something like this:
 ```
 // global attributes:
 		:license = "CC-BY-4.0" ;
