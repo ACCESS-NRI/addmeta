@@ -1,5 +1,7 @@
-# Use experiment level metadata
--m=../metadata.yaml
+# Use experiment level metadata as data variables
+-d=../metadata.yaml
+# Use environment metadata as data variables
+-d=../env.yaml
 # Ocean model specific global metadata
 -m=meta_ocean_global.yaml
 # Extract frequency from filename 

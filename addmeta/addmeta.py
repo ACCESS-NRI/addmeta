@@ -5,6 +5,7 @@ from __future__ import print_function
 
 from collections import defaultdict
 from collections.abc import Mapping
+import copy
 import csv
 from datetime import datetime, timezone
 import io
@@ -33,11 +34,17 @@ def dict_merge(dct, merge_dct):
             dct[k] = v
 
 def read_yaml(fname):
-    """Parse yaml file and return a dict."""
+    """Open metadata yaml file and return a dict."""
 
-    metadict = {}
+    yamldict = {}
     with open(fname, 'r') as yaml_file:
-        metadict = yaml.safe_load(yaml_file)
+        yamldict = yaml.safe_load(yaml_file)
+
+    return yamldict 
+
+def read_metadata(fname):
+
+    metadict = read_yaml(fname)
 
     # Check if this appears to be a plain key/value yaml file rather
     # than a structured file with 'global' and 'variables' keywords
@@ -59,34 +66,34 @@ def combine_meta(fnames):
     allmeta = {}
 
     for fname in fnames:
-        meta = read_yaml(fname)
+        meta = read_metadata(fname)
         dict_merge(allmeta, meta)
 
     return allmeta
+
+def get_file_metadata(filename):
+    """Get file metadata and return as a dict"""
+
+    ncpath = Path(filename)
+    ncpath_stat = ncpath.stat()
+
+    metadata = {key: getattr(ncpath_stat, 'st_'+key) for key in ["mtime", "size"]}
+
+    # mtime should be a posix timestamp and thus in UTC
+    metadata['mtime'] = isoformat(datetime.fromtimestamp(metadata['mtime'], tz=timezone.utc))
+
+    # Pre-populate from pathlib API
+    metadata['parent'] = ncpath.absolute().parent
+    metadata['name'] = ncpath.name
+    metadata['fullpath'] = str(ncpath.absolute())
+
+    return metadata
+
 
 def add_meta(ncfile, metadict, template_vars, sort_attrs=False, verbose=False):
     """
     Add meta data from a dictionary to a netCDF file
     """
-
-    # Generate some template variables from the 
-    # file being processed
-
-    ncpath = Path(ncfile)
-    ncpath_stat = ncpath.stat()
-    for key in ["mtime", "size"]:
-        template_vars[key] = getattr(ncpath_stat, 'st_'+key)
-
-    # mtime should be a posix timestamp and thus in UTC
-    template_vars['mtime'] = isoformat(datetime.fromtimestamp(template_vars['mtime'], tz=timezone.utc))
-
-    # Pre-populate from pathlib API
-    template_vars['parent'] = ncpath.absolute().parent
-    template_vars['name'] = ncpath.name
-    template_vars['fullpath'] = str(ncpath.absolute())
-
-    # Now (e.g. for date_metadata_modified)
-    template_vars['now'] = isoformat(datetime.now(timezone.utc))
 
     rootgrp = nc.Dataset(ncfile, "r+")
     # Add metadata to matching variables
@@ -168,28 +175,42 @@ def set_attribute(group, attribute, value, template_vars, verbose=False):
 
         group.setncattr(attribute, value)
 
-def find_and_add_meta(ncfiles, metadata, fnregexs, sort_attrs=False, verbose=False):
+def serialise_dict_values(dictionary):
+    """Serialise any list or arrays values in a dictionary"""
+    return {k: array_to_csv(v) if isinstance(v, (tuple, list)) else v for k, v in dictionary.items()}
+
+def load_data_files(datafiles):
+    """Load key/data from json files, and return a namespaced dict"""
+
+    namespace_dict = {}
+
+    for datafile in [Path(f) for f in datafiles]: 
+        namespace_dict[datafile.stem] = serialise_dict_values(read_yaml(datafile))
+
+    return namespace_dict
+
+def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, verbose=False):
     """
     Add meta data from 1 or more yaml formatted files to one or more
     netCDF files
     """
 
-    # Populate template with resolved global items (i.e. anything without '{{ }}')
-    filter_f = lambda item: not (isinstance(item[1], str) and '{{' in item[1])
-    template_vars = dict(filter(filter_f, metadata.get('global', {}).items()))
-
-    # Any template vars from global that are lists need to be serialised
-    template_vars = {k: array_to_csv(v) if isinstance(v, (tuple, list)) else v \
-        for k, v in template_vars.items()}
+    template_vars = copy.deepcopy(kwdata)
 
     if verbose: print("Processing netCDF files:")
     for fname in ncfiles:
         if verbose: print(f"  {fname}")
 
         # Match supplied regex against filename and add metadata
-        template_vars_file = template_vars | match_filename_regex(fname, fnregexs, verbose)
+        template_vars['__file__'] = match_filename_regex(fname, fnregexs, verbose)
 
-        add_meta(fname, metadata, template_vars_file, sort_attrs=sort_attrs, verbose=verbose)
+        # Add file metadata
+        template_vars['__file__'].update(get_file_metadata(fname))
+
+        # Add special __datetime__.now template variable
+        template_vars['__datetime__'] = {'now':  isoformat(datetime.now(timezone.utc)) }
+
+        add_meta(fname, metadata, template_vars, sort_attrs=sort_attrs, verbose=verbose)
         
 def skip_comments(file):
     """Skip lines that begin with a comment character (#) or are empty

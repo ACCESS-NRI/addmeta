@@ -27,15 +27,15 @@ import pytest
 import netCDF4 as nc
 
 import addmeta
-from addmeta import read_yaml, dict_merge, combine_meta, add_meta, find_and_add_meta, skip_comments, list_from_file
-from common import runcmd, make_nc, get_meta_data_from_file, dict1_in_dict2
+from addmeta import read_metadata, dict_merge, combine_meta, add_meta, find_and_add_meta, skip_comments, list_from_file
+from common import make_nc, get_meta_data_from_file, dict1_in_dict2
 
 verbose = True
 
-def test_read_yaml():
-    if verbose:  print("\nIn test_read_yaml")
+def test_read_metadata():
+    if verbose:  print("\nIn test_read_metadata")
 
-    dict1 = read_yaml("test/meta1.yaml")
+    dict1 = read_metadata("test/meta1.yaml")
 
     assert(dict1 == {
         'global': {
@@ -46,7 +46,7 @@ def test_read_yaml():
             }
         })
 
-    dict2 = read_yaml("test/meta2.yaml")
+    dict2 = read_metadata("test/meta2.yaml")
 
     assert(dict2 == {'global': {'Publisher': 'ARC Centre of Excellence for Climate System Science (ARCCSS)', 'Credit': 'NCI'}})
 
@@ -70,15 +70,15 @@ def test_read_yaml():
 
     # Unfortunately when yaml files are concatenated, subsequent values overwrite
     # previous entries, so this is equivalent to dict2
-    dictcat = read_yaml("test/meta12.yaml")
+    dictcat = read_metadata("test/meta12.yaml")
 
     assert(dictcat == dict2)
 
 def test_noglobal():
     if verbose:  print("\nIn test_noglobal")
 
-    dict1 = read_yaml("test/meta1.yaml")
-    dict2 = read_yaml("test/meta1_noglobal.yaml")
+    dict1 = read_metadata("test/meta1.yaml")
+    dict2 = read_metadata("test/meta1_noglobal.yaml")
 
     assert(dict1 == dict2)
 
@@ -90,7 +90,7 @@ def test_metadata():
         for fname in files:
             path = os.path.join(root,fname)
             print("Reading {}".format(path))
-            dict = read_yaml(path)
+            dict = read_metadata(path)
 
 def test_skipcomments():
 
@@ -107,26 +107,26 @@ def test_list_from_file():
     assert(filelist == [Path('test/meta1.yaml'), Path('test/meta2.yaml')])
            
 def test_add_meta(make_nc):
-    dict1 = read_yaml("test/meta1.yaml")
+    dict1 = read_metadata("test/meta1.yaml")
     add_meta(make_nc, dict1, {})
 
     assert(dict1_in_dict2(dict1["global"], get_meta_data_from_file(make_nc)))
 
-    dict1 = read_yaml("test/meta_var1.yaml")
+    dict1 = read_metadata("test/meta_var1.yaml")
     add_meta(make_nc, dict1, {})
 
     for var in dict1["variables"]:
         assert(dict1_in_dict2(dict1["variables"][var], get_meta_data_from_file(make_nc, var)))
 
 def test_find_add_meta(make_nc):
-    find_and_add_meta( [make_nc], combine_meta(['test/meta2.yaml','test/meta1.yaml']), {})
+    find_and_add_meta( [make_nc], combine_meta(['test/meta2.yaml','test/meta1.yaml']), {}, {})
 
-    dict1 = read_yaml("test/meta1.yaml")
+    dict1 = read_metadata("test/meta1.yaml")
     assert(dict1_in_dict2(dict1["global"], get_meta_data_from_file(make_nc)))
 
-    find_and_add_meta( [make_nc], combine_meta(['test/meta_var1.yaml']), {} )
+    find_and_add_meta( [make_nc], combine_meta(['test/meta_var1.yaml']), {}, {} )
 
-    dict1 = read_yaml("test/meta_var1.yaml")
+    dict1 = read_metadata("test/meta_var1.yaml")
 
     for var in dict1["variables"]:
         assert(dict1_in_dict2(dict1["variables"][var], get_meta_data_from_file(make_nc, var)))
@@ -140,7 +140,7 @@ def test_del_attributes(make_nc):
     assert( '_FillValue' in attributes )
     assert( 'Tiddly' not in attributes )
 
-    find_and_add_meta( [make_nc], combine_meta(['test/meta_del.yaml']), {})
+    find_and_add_meta( [make_nc], combine_meta(['test/meta_del.yaml']), {}, {})
 
     attributes = get_meta_data_from_file(make_nc)
     assert( 'unlikelytobeoverwritten' not in attributes )

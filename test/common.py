@@ -19,12 +19,16 @@ limitations under the License.
 """
 
 from pathlib import Path
+import os
 import shlex
 import subprocess
+import yaml
 
 import netCDF4 as nc
 import pytest
 
+payu_run_id = '0d1e048'
+    
 def runcmd(cmd, rwd=None):
     """
     Run a command, print stderr to stdout and optionally run in working
@@ -41,6 +45,17 @@ def make_nc(tmp_path):
     cmd = f"ncgen -o {ncfilename} test/test.cdl"
     runcmd(cmd)
     return ncfilename
+
+@pytest.fixture
+def make_env_data():
+    env = dict(os.environ)
+    env['PAYU_RUN_ID'] = payu_run_id
+    fname = Path('test/examples/env.yaml')
+    with open(fname, 'w') as outfile:
+        yaml.dump(env, outfile)
+
+    yield fname
+    fname.unlink()
 
 def get_meta_data_from_file(fname, var=None):
 

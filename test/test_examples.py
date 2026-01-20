@@ -28,11 +28,12 @@ import shutil
 import jinja2
 
 from addmeta import cli
-from common import runcmd, get_meta_data_from_file, make_nc as make_nc_common
+from common import runcmd, get_meta_data_from_file, make_nc as make_nc_common, make_env_data, payu_run_id
 
 @pytest.fixture
-def make_nc():
-    wd = Path('test/examples/ocean')
+def make_nc(request):
+    subdir = request.param
+    wd = Path('test/examples/') / subdir
     ncfilename = wd / 'test.nc'
     cmd = f'ncgen -o {ncfilename} test/test.cdl'
     runcmd(cmd)
@@ -45,6 +46,7 @@ def make_nc():
         f.unlink()
 
 
+@pytest.mark.parametrize('make_nc', ['ocean'], indirect=True)
 @pytest.mark.parametrize(
     "filenames,expected",
     [
@@ -88,8 +90,8 @@ def make_nc():
              },
              'oceanbgc-3d-zprod_gross-1monthly-mean-ym_0792_01.nc':
              {
-		        'Publisher': "Will be overwritten",
-		        'contact': "Add your name here" ,
+                'Publisher': "Will be overwritten",
+                'contact': "Add your name here" ,
                 'email': "Add your email address here" ,
                 'realm': "ocean" ,
                 'nominal_resolution': "100 km" ,
@@ -118,7 +120,7 @@ def test_filename_regex(make_nc, filenames, expected):
         os.makedirs(filepath.parent, exist_ok=True)
         shutil.copy(testfile, filepath)
 
-    runcmd(rf"addmeta -c {wd}/addmetalist -v --fnregex='oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'")
+    runcmd(rf"addmeta -v -c {wd}/addmetalist -v --fnregex='oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'")
 
     for filename in filenames:
         filepath = wd / filename
@@ -129,6 +131,83 @@ def test_filename_regex(make_nc, filenames, expected):
         assert( expected[filename] == actual )
 
 
+@pytest.mark.parametrize('make_nc', ['ocean_datavars'], indirect=True)
+@pytest.mark.parametrize(
+    "filenames,expected",
+    [
+        pytest.param(
+            ['subdir1/ocean-2d-wind_power_u-1monthly-mean-ym_0792_01.nc',
+             'ocean-3d-power_diss_drag-1yearly-mean-ym_0792_07.nc',
+             'oceanbgc-3d-zprod_gross-1monthly-mean-ym_0792_01.nc'],
+            {
+             'subdir1/ocean-2d-wind_power_u-1monthly-mean-ym_0792_01.nc': 
+             {
+                'filename': "ocean-2d-wind_power_u-1monthly-mean-ym_0792_01.nc",
+                'help': "I need somebody" ,
+                'model_version': "2.1" ,
+                'realm': "ocean" ,
+                'frequency': "1monthly" ,
+                'Publisher': "Will be overwritten",
+                'model': "ACCESS-ESM1.6" ,
+                'version': "1.1" ,
+                'url': "https://github.com/ACCESS-NRI/access-esm1.5-configs.git" ,
+                'keywords': 'global,access-esm1.6',
+                'run_id': payu_run_id
+             },
+             'ocean-3d-power_diss_drag-1yearly-mean-ym_0792_07.nc': {
+                'filename': "ocean-3d-power_diss_drag-1yearly-mean-ym_0792_07.nc",
+                'help': "I need somebody" ,
+                'model_version': "2.1" ,
+                'realm': "ocean" ,
+                'frequency': "1yearly" ,
+                'Publisher': "Will be overwritten",
+                'model': "ACCESS-ESM1.6" ,
+                'version': "1.1" ,
+                'url': "https://github.com/ACCESS-NRI/access-esm1.5-configs.git" ,
+                'keywords': 'global,access-esm1.6',
+                'run_id': payu_run_id
+             },
+             'oceanbgc-3d-zprod_gross-1monthly-mean-ym_0792_01.nc':
+             {
+                'filename': "oceanbgc-3d-zprod_gross-1monthly-mean-ym_0792_01.nc" ,
+                'help': "I need somebody" ,
+                'model_version': "2.1" ,
+                'realm': "ocean" ,
+                'frequency': "1monthly" ,
+                'Publisher': "Will be overwritten",
+                'model': "ACCESS-ESM1.6" ,
+                'version': "1.1" ,
+                'url': "https://github.com/ACCESS-NRI/access-esm1.5-configs.git" ,
+                'keywords': 'global,access-esm1.6',
+                'run_id': payu_run_id
+             },
+            },
+            id="ocean" 
+        ),
+    ],
+)
+def test_filename_regex_datavars(make_nc, make_env_data, filenames, expected):
+
+    wd = Path('test/examples/ocean_datavars')
+    testfile = wd / 'test.nc'
+
+    for filename in filenames:
+        filepath = wd / filename
+        os.makedirs(filepath.parent, exist_ok=True)
+        shutil.copy(testfile, filepath)
+
+    runcmd(rf"addmeta -v -c {wd}/addmetalist -v --fnregex='oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'")
+
+    for filename in filenames:
+        filepath = wd / filename
+        actual = get_meta_data_from_file(filepath)
+
+        # Date created will be dynamic, so remove but make sure it exists
+        assert( actual.pop('date_created') )
+        assert( expected[filename] == actual )
+
+
+@pytest.mark.parametrize('make_nc', ['ocean'], indirect=True)
 @pytest.mark.parametrize(
     "filenames,expected",
     [
@@ -183,6 +262,7 @@ def test_filename_regex_absolute(make_nc, filenames, expected):
         assert( actual.pop('date_created') )
         assert( expected[filename] == actual )
 
+@pytest.mark.parametrize('make_nc', ['ocean'], indirect=True)
 @pytest.mark.parametrize(
     "filenames,expected",
     [

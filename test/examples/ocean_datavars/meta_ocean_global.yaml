@@ -1,0 +1,14 @@
+global:
+    filename: "{{ __file__.name }}"
+    help: "I need somebody"
+    model_version: "2.1"
+    date_created: "{{ __file__.mtime }}" 
+    realm: "ocean"
+    frequency: "{{ __file__.frequency }}"
+    Publisher: "{{ metadata.Publisher }}"
+    model: "{{ metadata.model }}"
+    version: "{{ metadata.version }}"
+    url: "{{ metadata.url }}"
+    keywords: "{{ metadata.keywords }}"
+    run_id: "{{ env.PAYU_RUN_ID }}"
+    unlikelytobeoverwritten:
