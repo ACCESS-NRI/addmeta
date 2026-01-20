@@ -108,8 +108,9 @@ named groups in different regexes, later defined regexes override previous ones.
 ### User defined template variables
 
 User defined template variables are supported as *datafiles*: yaml files with
-key/values. The keys are accessible through a namespace defined as the stem of
-the yaml file they are read from.
+key/values. The keys are accessible through a namespace defined as the 
+[stem of the yaml filename](https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.stem)
+they are read from.
 
 For example:
 
