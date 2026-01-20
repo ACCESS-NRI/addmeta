@@ -20,7 +20,7 @@ limitations under the License.
 
 import pytest
 
-from addmeta import array_to_csv
+from addmeta import array_to_csv, serialise_dict_values
 
 @pytest.mark.parametrize("array,string", 
     [ 
@@ -43,3 +43,12 @@ def test_array_to_csv_with_quoted_element():
     with pytest.warns(UserWarning, match=warning_text):
         result = array_to_csv(array)
     assert result == array
+
+def test_serialise_dict_values():
+    """
+    Test for test_serialise_dict_values which serialises dictionary values
+    """
+    test_dict = { 1: [2, 3, 4], 5: 6, 7: [8, '9', '10']}
+    serialised_dict = { 1: '2,3,4', 5: 6, 7: '8,9,10' }
+
+    assert( serialise_dict_values(test_dict) == serialised_dict )
