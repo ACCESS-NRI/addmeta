@@ -216,9 +216,10 @@ e.g.
 -m=meta_ocean_variable.yaml
 # Extract frequency from filename 
 --fn-regex=.*\.(?P<frequency>.*)\.mean\.\d+-\d+\.nc$
-# Apply to all ocean data in output subdirectory
-output/ocean_*.nc
+# Apply to all ocean data in $OUTPUTDIR directory (defined at runtime)
+${OUTPUTDIR}/output/ocean_*.nc
 ```
+The use of environment variables for files arguments is supported
 
 > [!CAUTION]
 > Do not quote regex strings in a command file as above. String quoting is still
