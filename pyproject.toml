@@ -19,6 +19,9 @@ dependencies = [
     "netcdf4",
     "pyyaml",
     "Jinja2",
+    # Need an older version of ipynbname for cmdline_provenance
+    "ipynbname==2023.2.0.0",
+    "cmdline_provenance",
 ]
 
 [project.optional-dependencies]

@@ -27,7 +27,7 @@ import shutil
 
 import jinja2
 
-from addmeta import cli
+from addmeta import cli, HISTORY_CREATED_MESSAGE
 from common import runcmd, get_meta_data_from_file, make_nc as make_nc_common, make_env_data, payu_run_id
 
 @pytest.fixture
@@ -387,3 +387,27 @@ def test_multiple_metadata_files(tmp_path, make_nc_common, metadata_files_lists,
 
     # Confirm contents are intact
     assert expected == actual
+
+
+def test_history_creation(tmp_path, make_nc_common):
+    testfile = make_nc_common
+    runcmd(rf"addmeta -v --update-history {testfile}")
+
+    actual = get_meta_data_from_file(testfile)
+
+    history_lines = actual['history'].split('\n')
+
+    assert len(history_lines) == 2
+    assert history_lines[-1] == HISTORY_CREATED_MESSAGE
+
+def test_history_update(tmp_path, make_nc_common):
+    testfile = make_nc_common
+    runcmd(rf"addmeta -v --update-history {testfile}")
+    runcmd(rf"addmeta -v --update-history {testfile}")
+
+    actual = get_meta_data_from_file(testfile)
+
+    history_lines = actual['history'].split('\n')
+
+    assert len(history_lines) == 3
+    assert history_lines[-1] == HISTORY_CREATED_MESSAGE

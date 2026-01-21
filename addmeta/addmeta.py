@@ -16,6 +16,12 @@ from warnings import warn
 from jinja2 import Template, StrictUndefined, UndefinedError
 import netCDF4 as nc
 import yaml
+import cmdline_provenance
+
+
+# History message extracted here to enable testing
+HISTORY_CREATED_MESSAGE = "History attribute created my addmeta"
+
 
 # From https://gist.github.com/angstwad/bf22d1822c38a92ec0a9
 def dict_merge(dct, merge_dct):
@@ -90,7 +96,27 @@ def get_file_metadata(filename):
     return metadata
 
 
-def add_meta(ncfile, metadict, template_vars, sort_attrs=False, verbose=False):
+def update_history_attr(group, verbose=False):
+    """
+    Update the history attribute with info on this invocation of addmeta.
+    Create the history attirbute if it doesn't exist yet.
+    """
+    # Grab the history if it exists
+    if "history" in group.ncattrs():
+        history = group.getncattr("history")
+    else:
+        history = HISTORY_CREATED_MESSAGE
+
+    # Create the updated history attribute
+    infile_logs = {group.filepath: history}
+    history = cmdline_provenance.new_log(infile_logs=infile_logs)
+
+    # Update the attribute
+    if verbose: print(f"      + history: {history}")
+    group.setncattr("history", history)
+
+
+def add_meta(ncfile, metadict, template_vars, sort_attrs=False, update_history=False, verbose=False):
     """
     Add meta data from a dictionary to a netCDF file
     """
@@ -102,6 +128,10 @@ def add_meta(ncfile, metadict, template_vars, sort_attrs=False, verbose=False):
             if var in rootgrp.variables:
                 for attr, value in attr_dict.items():
                     set_attribute(rootgrp.variables[var], attr, value, template_vars)
+
+    # Update (or create) the history attribute
+    if update_history:
+        update_history_attr(rootgrp, verbose=verbose)
 
     # Set global meta data
     if "global" in metadict:
@@ -189,7 +219,7 @@ def load_data_files(datafiles):
 
     return namespace_dict
 
-def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, verbose=False):
+def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, update_history=False, verbose=False):
     """
     Add meta data from 1 or more yaml formatted files to one or more
     netCDF files
@@ -210,7 +240,14 @@ def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, ver
         # Add special __datetime__.now template variable
         template_vars['__datetime__'] = {'now':  isoformat(datetime.now(timezone.utc)) }
 
-        add_meta(fname, metadata, template_vars, sort_attrs=sort_attrs, verbose=verbose)
+        add_meta(
+            fname,
+            metadata,
+            template_vars,
+            sort_attrs=sort_attrs,
+            update_history=update_history,
+            verbose=verbose
+        )
         
 def skip_comments(file):
     """Skip lines that begin with a comment character (#) or are empty

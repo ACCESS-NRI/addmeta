@@ -39,6 +39,7 @@ def parse_args(args):
     parser.add_argument("-d","--datafiles", help="One or more key/value data files in YAML format", action='append')
     parser.add_argument("-f","--fnregex", help="Extract metadata from filename using regex", default=[], action='append')
     parser.add_argument("-s","--sort", help="Sort all keys lexicographically, ignoring case", action="store_true")
+    parser.add_argument("--update-history", help="Update (or create) the history global attribute", action="store_true")
     parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
     parser.add_argument("files", help="netCDF files", nargs='*')
 
@@ -65,7 +66,15 @@ def main(args):
 
     if verbose: print("metafiles: "," ".join([str(f) for f in metafiles]))
 
-    find_and_add_meta(args.files, combine_meta(metafiles), kwdata, args.fnregex, args.sort, verbose)
+    find_and_add_meta(
+        args.files,
+        combine_meta(metafiles),
+        kwdata,
+        args.fnregex,
+        sort_attrs=args.sort,
+        update_history=args.update_history,
+        verbose=verbose,
+    )
 
 def safe_join_lists(list1, list2):
     """
