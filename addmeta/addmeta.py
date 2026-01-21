@@ -113,7 +113,7 @@ def _build_history(previous_history=""):
 
     addmeta_version = _version.get_versions()['version']
 
-    return f"{time_stamp} : {python_exe} {args} (addmeta {addmeta_version}){previous_history}"
+    return f"{time_stamp} : addmeta {addmeta_version} : {python_exe} {args}{previous_history}"
 
 
 def update_history_attr(group, verbose=False):
