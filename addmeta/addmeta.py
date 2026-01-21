@@ -10,13 +10,16 @@ import csv
 from datetime import datetime, timezone
 import io
 from pathlib import Path
+from platform import python_version
 import re
+from sys import argv
 from warnings import warn
 
 from jinja2 import Template, StrictUndefined, UndefinedError
 import netCDF4 as nc
 import yaml
 import cmdline_provenance
+from . import _version
 
 
 # History message extracted here to enable testing
@@ -96,6 +99,23 @@ def get_file_metadata(filename):
     return metadata
 
 
+def _build_history(previous_history=""):
+    if previous_history != "":
+        previous_history = "\n" + previous_history
+
+    time_stamp = datetime.now(timezone.utc).isoformat(timespec='seconds')
+    python_exe = f"python{python_version()}"
+
+    # The last argument is always the list of files which can be very long and is
+    # inplicit in the file itself
+    # FIXME: This isn't fool proof need a better way to remove the files
+    args = " ".join([a for a in argv if a[-3:] != '.nc'])
+
+    addmeta_version = _version.get_versions()['version']
+
+    return f"{time_stamp} : {python_exe} {args} (addmeta {addmeta_version}){previous_history}"
+
+
 def update_history_attr(group, verbose=False):
     """
     Update the history attribute with info on this invocation of addmeta.
@@ -108,8 +128,7 @@ def update_history_attr(group, verbose=False):
         history = HISTORY_CREATED_MESSAGE
 
     # Create the updated history attribute
-    infile_logs = {group.filepath: history}
-    history = cmdline_provenance.new_log(infile_logs=infile_logs)
+    history = _build_history(previous_history=history)
 
     # Update the attribute
     if verbose: print(f"      + history: {history}")
