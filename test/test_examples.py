@@ -167,8 +167,7 @@ def test_filename_regex(make_nc, filenames, expected):
                 'keywords': 'global,access-esm1.6',
                 'run_id': payu_run_id
              },
-             'oceanbgc-3d-zprod_gross-1monthly-mean-ym_0792_01.nc':
-             {
+             'oceanbgc-3d-zprod_gross-1monthly-mean-ym_0792_01.nc': {
                 'filename': "oceanbgc-3d-zprod_gross-1monthly-mean-ym_0792_01.nc" ,
                 'help': "I need somebody" ,
                 'model_version': "2.1" ,
@@ -196,7 +195,7 @@ def test_filename_regex_datavars(make_nc, make_env_data, filenames, expected):
         os.makedirs(filepath.parent, exist_ok=True)
         shutil.copy(testfile, filepath)
 
-    runcmd(rf"addmeta -v -c {wd}/addmetalist -v --fnregex='oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'")
+    runcmd(rf"addmeta -v -c {wd}/addmetalist -v --fnregex='oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'", env={'TESTDIR': str(wd.absolute())})
 
     for filename in filenames:
         filepath = wd / filename
@@ -205,7 +204,6 @@ def test_filename_regex_datavars(make_nc, make_env_data, filenames, expected):
         # Date created will be dynamic, so remove but make sure it exists
         assert( actual.pop('date_created') )
         assert( expected[filename] == actual )
-
 
 @pytest.mark.parametrize('make_nc', ['ocean'], indirect=True)
 @pytest.mark.parametrize(
