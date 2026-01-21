@@ -112,6 +112,7 @@ def resolve_relative_paths(files, base_path):
     """
     resolved = []
     for file in files:
+        file = os.path.expandvars(file)
         if os.path.isabs(file):
             resolved.extend(glob(file))
         else:
