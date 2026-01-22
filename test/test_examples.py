@@ -409,4 +409,3 @@ def test_history_update(tmp_path, make_nc_common):
     history_lines = actual['history'].split('\n')
 
     assert len(history_lines) == 2
-  
