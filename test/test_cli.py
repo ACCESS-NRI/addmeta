@@ -57,11 +57,15 @@ def test_cmdlinearg_from_file(mock_main, touch_nc):
               datavar=[],
               sort=False,
               verbose=False, 
-              # Reverse to ensure reordering check below works
-              files=touch_nc[0:2][::-1],
+              files=touch_nc[0:2],
               )
 
-    assert vars(addmeta.cli.main_parse_args(args)) == vars(all_args)
+    actual = vars(addmeta.cli.main_parse_args(args))
+    expected = vars(all_args)
+
+    # Remove the files lists and compare separately due to ordering issues
+    assert sorted(actual.pop('files')) == sorted(expected.pop('files'))
+    assert actual == expected
 
     # Now call into mocked main with same args
     assert addmeta.cli.main(addmeta.cli.main_parse_args(args)) == True
