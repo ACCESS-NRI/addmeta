@@ -19,12 +19,22 @@ limitations under the License.
 """
 
 import argparse
+from datetime import datetime, timezone
 from glob import glob
 import os
 from pathlib import Path
+from platform import python_version
 import sys
 
-from addmeta import find_and_add_meta, combine_meta, list_from_file, skip_comments, load_data_files
+from addmeta import (
+    find_and_add_meta,
+    combine_meta,
+    list_from_file,
+    skip_comments,
+    load_data_files,
+    __version__ as addmeta_version,
+)
+
 
 def parse_args(args):
     """
@@ -39,6 +49,7 @@ def parse_args(args):
     parser.add_argument("-d","--datafiles", help="One or more key/value data files in YAML format", action='append')
     parser.add_argument("-f","--fnregex", help="Extract metadata from filename using regex", default=[], action='append')
     parser.add_argument("-s","--sort", help="Sort all keys lexicographically, ignoring case", action="store_true")
+    parser.add_argument("--update-history", help="Update (or create) the history global attribute", action="store_true")
     parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
     parser.add_argument("files", help="netCDF files", nargs='*')
 
@@ -64,8 +75,21 @@ def main(args):
         metafiles.extend(args.metafiles)
 
     if verbose: print("metafiles: "," ".join([str(f) for f in metafiles]))
+    
+    if args.update_history:
+        history = build_history(args.files)
+    else:
+        history = None
 
-    find_and_add_meta(args.files, combine_meta(metafiles), kwdata, args.fnregex, args.sort, verbose)
+    find_and_add_meta(
+        args.files,
+        combine_meta(metafiles),
+        kwdata,
+        args.fnregex,
+        sort_attrs=args.sort,
+        history=history,
+        verbose=verbose,
+    )
 
 def safe_join_lists(list1, list2):
     """
@@ -93,6 +117,15 @@ def resolve_relative_paths(files, base_path):
         else:
             resolved.extend([str(f) for f in base_path.glob(file)])
     return resolved
+
+def build_history(files):
+    time_stamp = datetime.now(timezone.utc).isoformat(timespec='seconds')
+    python_exe = f"python{python_version()}"
+
+    # The list of files given on the commandline is not needed in the history
+    args = " ".join([a for a in sys.argv if a not in files])
+  
+    return f"{time_stamp} : addmeta {addmeta_version} : {python_exe} {args}"
 
 def main_parse_args(args):
     """

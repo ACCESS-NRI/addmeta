@@ -387,3 +387,25 @@ def test_multiple_metadata_files(tmp_path, make_nc_common, metadata_files_lists,
 
     # Confirm contents are intact
     assert expected == actual
+
+
+def test_history_creation(tmp_path, make_nc_common):
+    testfile = make_nc_common
+    runcmd(rf"addmeta -v --update-history {testfile}")
+
+    actual = get_meta_data_from_file(testfile)
+
+    history_lines = actual['history'].split('\n')
+
+    assert len(history_lines) == 1
+
+def test_history_update(tmp_path, make_nc_common):
+    testfile = make_nc_common
+    runcmd(rf"addmeta -v --update-history {testfile}")
+    runcmd(rf"addmeta -v --update-history {testfile}")
+
+    actual = get_meta_data_from_file(testfile)
+
+    history_lines = actual['history'].split('\n')
+
+    assert len(history_lines) == 2

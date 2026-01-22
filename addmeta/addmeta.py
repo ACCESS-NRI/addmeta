@@ -17,6 +17,7 @@ from jinja2 import Template, StrictUndefined, UndefinedError
 import netCDF4 as nc
 import yaml
 
+
 # From https://gist.github.com/angstwad/bf22d1822c38a92ec0a9
 def dict_merge(dct, merge_dct):
     """ Recursive dict merge. Inspired by :meth:``dict.update()``, instead of
@@ -90,7 +91,22 @@ def get_file_metadata(filename):
     return metadata
 
 
-def add_meta(ncfile, metadict, template_vars, sort_attrs=False, verbose=False):
+def update_history_attr(group, history, verbose=False):
+    """
+    Update the history attribute with info on this invocation of addmeta.
+    Create the history attribute if it doesn't exist yet.
+    """
+    if verbose: print(f"      + history: {history}")
+
+    # Grab the previous history if it exists
+    if "history" in group.ncattrs():
+        history = "\n".join([group.getncattr("history"), history])
+
+    # Update the attribute
+    group.setncattr("history", history)
+
+
+def add_meta(ncfile, metadict, template_vars, sort_attrs=False, history=None, verbose=False):
     """
     Add meta data from a dictionary to a netCDF file
     """
@@ -102,6 +118,10 @@ def add_meta(ncfile, metadict, template_vars, sort_attrs=False, verbose=False):
             if var in rootgrp.variables:
                 for attr, value in attr_dict.items():
                     set_attribute(rootgrp.variables[var], attr, value, template_vars)
+
+    # Update (or create) the history attribute
+    if history:
+        update_history_attr(rootgrp, history, verbose=verbose)
 
     # Set global meta data
     if "global" in metadict:
@@ -189,7 +209,7 @@ def load_data_files(datafiles):
 
     return namespace_dict
 
-def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, verbose=False):
+def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, history=None, verbose=False):
     """
     Add meta data from 1 or more yaml formatted files to one or more
     netCDF files
@@ -210,7 +230,14 @@ def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, ver
         # Add special __datetime__.now template variable
         template_vars['__datetime__'] = {'now':  isoformat(datetime.now(timezone.utc)) }
 
-        add_meta(fname, metadata, template_vars, sort_attrs=sort_attrs, verbose=verbose)
+        add_meta(
+            fname,
+            metadata,
+            template_vars,
+            sort_attrs=sort_attrs,
+            history=history,
+            verbose=verbose
+        )
         
 def skip_comments(file):
     """Skip lines that begin with a comment character (#) or are empty

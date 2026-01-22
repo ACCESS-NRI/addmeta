@@ -159,6 +159,12 @@ This approach is best suited when most of the key/pairs of a `metadata.yaml` fil
 will be used. When only a small number of fields are required it is best to use
 the user defined data templating approach described above.
 
+### History
+
+netCDF applications are expected to update the history attribute when modifying
+the files. This can be enabled in `addmeta` with the `--update-history`
+commandline argument.
+
 ## Invocation
 
 `addmeta` provides a command line interface. Invoking with the `-h` flag prints
@@ -185,6 +191,7 @@ a summay of how to invoke the program correctly.
     -f FNREGEX, --fnregex FNREGEX
                             Extract metadata from filename using regex
     -s, --sort            Sort all keys lexicographically, ignoring case
+    --update-history      Update or create the history global attribute
     -v, --verbose         Verbose output
 
 
