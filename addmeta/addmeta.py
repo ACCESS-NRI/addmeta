@@ -94,7 +94,7 @@ def get_file_metadata(filename):
 def update_history_attr(group, history, verbose=False):
     """
     Update the history attribute with info on this invocation of addmeta.
-    Create the history attirbute if it doesn't exist yet.
+    Create the history attribute if it doesn't exist yet.
     """
     if verbose: print(f"      + history: {history}")
 
