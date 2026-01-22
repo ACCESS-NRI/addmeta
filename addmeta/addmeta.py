@@ -96,17 +96,14 @@ def update_history_attr(group, history, verbose=False):
     Update the history attribute with info on this invocation of addmeta.
     Create the history attirbute if it doesn't exist yet.
     """
+    if verbose: print(f"      + history: {history}")
+
     # Grab the previous history if it exists
     if "history" in group.ncattrs():
-        previous_history = "\n" + group.getncattr("history")
-    else:
-        previous_history = ""
-
-    new_history = f"{history}{previous_history}"
+        history = "\n".join(group.getncattr("history"), history)
 
     # Update the attribute
-    if verbose: print(f"      + history: {new_history}")
-    group.setncattr("history", new_history)
+    group.setncattr("history", history)
 
 
 def add_meta(ncfile, metadict, template_vars, sort_attrs=False, history=None, verbose=False):
