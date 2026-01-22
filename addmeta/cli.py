@@ -202,7 +202,6 @@ def main_parse_args(args):
     
     # Must return so that check command return value is passed back to calling routine
     # otherwise py.test will fail
-    # return main(parsed_args)
     return parsed_args
 
 def main_argv():
