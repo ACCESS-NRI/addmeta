@@ -173,7 +173,7 @@ global:
 ```
 and adding a single `--datavar freq='1daily'` option:
 ```bash
-addmeta -d job.yaml -m meta.yaml --datavar frequency='1daily' file.nc
+addmeta -d job.yaml -m meta.yaml --datavar freq='1daily' file.nc
 ```
 `file.nc` will have global metadata
 ```
