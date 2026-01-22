@@ -48,12 +48,25 @@ def parse_args(args):
     parser.add_argument("-l","--metalist", help="File containing a list of meta-data files", action='append')
     parser.add_argument("-d","--datafiles", help="One or more key/value data files in YAML format", action='append')
     parser.add_argument("-f","--fnregex", help="Extract metadata from filename using regex", default=[], action='append')
+    parser.add_argument("--datavar", help="Key/value pair to be added as data variable, e.g. --datavar 'var=value'", default=[], action='append')
     parser.add_argument("-s","--sort", help="Sort all keys lexicographically, ignoring case", action="store_true")
     parser.add_argument("--update-history", help="Update (or create) the history global attribute", action="store_true")
     parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
     parser.add_argument("files", help="netCDF files", nargs='*')
 
     return (parser, parser.parse_args(args))
+
+def parse_key_value_pairs(pairs):
+    """
+    Parse a list of key=value strings into a dictionary
+    """
+    result = {}
+    for pair in pairs:
+        if '=' not in pair:
+            raise ValueError(f"Invalid key/value pair: {pair}. Expected format: key=value")
+        key, value = pair.split('=', 1)
+        result[key] = value
+    return result
 
 def main(args):
     """
@@ -66,6 +79,17 @@ def main(args):
     if (args.datafiles is not None):
         if verbose: print("datafiles: "," ".join([str(f) for f in args.datafiles]))
         kwdata = load_data_files(args.datafiles)
+
+    # Process keyword --datavar command line arguments
+    if args.datavar:
+        if verbose: print("datavar: "," ".join([str(v) for v in args.datavar]))
+        try:
+            datavar_dict = parse_key_value_pairs(args.datavar)
+            # Add to kwdata under 'datavar' namespace
+            kwdata['__argdata__'] = datavar_dict
+        except ValueError as e:
+            if verbose: print(f"Error parsing datavar: {e}")
+            raise
 
     if (args.metalist is not None):
         for line in args.metalist:
@@ -112,6 +136,7 @@ def resolve_relative_paths(files, base_path):
     """
     resolved = []
     for file in files:
+        file = os.path.expandvars(file)
         if os.path.isabs(file):
             resolved.extend(glob(file))
         else:
@@ -165,6 +190,7 @@ def main_parse_args(args):
         parsed_args.metafiles = safe_join_lists(parsed_args.metafiles, new_parsed_args.metafiles)
         parsed_args.datafiles = safe_join_lists(parsed_args.datafiles, new_parsed_args.datafiles)
         parsed_args.fnregex = safe_join_lists(parsed_args.fnregex, new_parsed_args.fnregex)
+        parsed_args.datavar = safe_join_lists(parsed_args.datavar, new_parsed_args.datavar)
         parsed_args.verbose = parsed_args.verbose or new_parsed_args.verbose
         parsed_args.cmdlineargs = None
 
@@ -176,13 +202,13 @@ def main_parse_args(args):
     
     # Must return so that check command return value is passed back to calling routine
     # otherwise py.test will fail
-    return main(parsed_args)
+    return parsed_args
 
 def main_argv():
     """
     Call main and pass command line arguments. This is required for setup.py entry_points
     """
-    main_parse_args(sys.argv[1:])
+    main(main_parse_args(sys.argv[1:]))
 
 if __name__ == "__main__":
 

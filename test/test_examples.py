@@ -167,8 +167,7 @@ def test_filename_regex(make_nc, filenames, expected):
                 'keywords': 'global,access-esm1.6',
                 'run_id': payu_run_id
              },
-             'oceanbgc-3d-zprod_gross-1monthly-mean-ym_0792_01.nc':
-             {
+             'oceanbgc-3d-zprod_gross-1monthly-mean-ym_0792_01.nc': {
                 'filename': "oceanbgc-3d-zprod_gross-1monthly-mean-ym_0792_01.nc" ,
                 'help': "I need somebody" ,
                 'model_version': "2.1" ,
@@ -196,7 +195,7 @@ def test_filename_regex_datavars(make_nc, make_env_data, filenames, expected):
         os.makedirs(filepath.parent, exist_ok=True)
         shutil.copy(testfile, filepath)
 
-    runcmd(rf"addmeta -v -c {wd}/addmetalist -v --fnregex='oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'")
+    runcmd(rf"addmeta -v -c {wd}/addmetalist -v --fnregex='oceanbgc-\dd-(?P<variable>.*?)-(?P<frequency>.*?)-(?P<reduction>.*?)-??_\d+_\d+\.nc$'", env={'TESTDIR': str(wd.absolute())})
 
     for filename in filenames:
         filepath = wd / filename
@@ -205,7 +204,6 @@ def test_filename_regex_datavars(make_nc, make_env_data, filenames, expected):
         # Date created will be dynamic, so remove but make sure it exists
         assert( actual.pop('date_created') )
         assert( expected[filename] == actual )
-
 
 @pytest.mark.parametrize('make_nc', ['ocean'], indirect=True)
 @pytest.mark.parametrize(
@@ -252,7 +250,7 @@ def test_filename_regex_absolute(make_nc, filenames, expected):
         output.write(jinja2.Template(template.read()).render(examples_ocean_dir=wd.parent))
 
     # Call function directly as this doesn't require any complicated commandline parsing
-    cli.main_parse_args(shlex.split(f"-c {cmdfile} -v"))
+    cli.main(cli.main_parse_args(shlex.split(f"-c {cmdfile} -v")))
 
     for filename in filenames:
         filepath = wd / filename
@@ -409,3 +407,60 @@ def test_history_update(tmp_path, make_nc_common):
     history_lines = actual['history'].split('\n')
 
     assert len(history_lines) == 2
+
+@pytest.mark.parametrize('make_nc', ['ocean'], indirect=True)
+@pytest.mark.parametrize(
+    "filenames,expected",
+    [
+        pytest.param(
+            ['subdir1/ocean-2d-wind_power_u-1monthly-mean-ym_0792_01.nc'],
+            {
+             'subdir1/ocean-2d-wind_power_u-1monthly-mean-ym_0792_01.nc': 
+             {
+                'command_line_arg_data_1': '1',
+                'command_line_arg_data_2': 'Command line argument string',
+                'contact': 'Add your name here',
+                'date_created': 'right now',
+                'email': 'Add your email address here',
+                'frequency': '1monthly',
+                'help': 'I need somebody',
+                'keywords': 'global,access-esm1.6',
+                'license': 'CC-BY-4.0',
+                'model': 'ACCESS-ESM1.6',
+                'model_version': '2.1',
+                'nominal_resolution': '100 km',
+                'Publisher': 'Will be overwritten',
+                'realm': 'ocean',
+                'reference': 'https://doi.org/10.1071/ES19035',
+                'url': 'https://github.com/ACCESS-NRI/access-esm1.5-configs.git',
+                'version': '1.1',
+             },
+            },
+            id="ocean" 
+        ),
+    ],
+)
+def test_filename_datavar(make_nc, filenames, expected):
+    """Test that the datavar command line arguments are correctly substituted in the metadata files."""
+    wd = Path('test/examples/ocean')
+    testfile = wd / 'test.nc'
+
+    for filename in filenames:
+        filepath = wd / filename
+        os.makedirs(filepath.parent, exist_ok=True)
+        shutil.copy(testfile, filepath)
+
+    runcmd(rf"addmeta -c {wd}/addmetalist -m {wd}/meta_argdata.yaml -v --sort --datavar cmd1=1 --datavar cmd2='Command line argument string'")
+
+    for filename in filenames:
+        filepath = wd / filename
+        actual = get_meta_data_from_file(filepath)
+
+        # Date created will be dynamic, so adjust its value
+        actual['date_created'] = expected[filename]['date_created']
+
+        # Confirm contents are intact
+        assert expected[filename] == actual
+
+        # Confirm order is as expected
+        assert list(expected[filename].keys()) == list(actual.keys())

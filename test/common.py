@@ -29,7 +29,7 @@ import pytest
 
 payu_run_id = '0d1e048'
     
-def runcmd(cmd, rwd=None):
+def runcmd(cmd, rwd=None, env=None):
     """
     Run a command, print stderr to stdout and optionally run in working
     directory relative to the current directory
@@ -37,7 +37,10 @@ def runcmd(cmd, rwd=None):
     cwd = Path.cwd()
     if rwd is not None:
         cwd = str(cwd / rwd)
-    subprocess.run(shlex.split(cmd),stderr=subprocess.STDOUT, cwd=cwd)
+    local_env = os.environ.copy()
+    if env is not None:
+        local_env.update(env)
+    subprocess.run(shlex.split(cmd),stderr=subprocess.STDOUT, cwd=cwd, env=local_env)
 
 @pytest.fixture
 def make_nc(tmp_path):

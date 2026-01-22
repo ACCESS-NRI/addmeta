@@ -44,8 +44,16 @@ values can be given and overridden when necessary.
 
 `addmeta` supports limited dynamic templating to allow injection of file specific
 metadata in a general way. This is done using 
-[Jinja templating](https://jinja.palletsprojects.com/en/stable/) and providing a
-number of pre-populated variables in special namespaces (`__file__` and `__datetime__`):
+[Jinja templating](https://jinja.palletsprojects.com/en/stable/) and template variables.
+
+Template variables are defined in four ways: automatically generated based on file
+attributes, automatically generated but user-configured based on filename, statically
+defined in user defined files, and via command line arguments.
+
+#### File attributes
+
+A number of file attributes variables are automatically provided in a pre-populated 
+special namespaces: `__file__` and `__datetime__`:
 
 |variable| description|
 |----|----|
@@ -57,7 +65,6 @@ number of pre-populated variables in special namespaces (`__file__` and `__datet
 |`__datetime__.now`|The datetime addmeta is run|
 
 These variables can be used in a metadata file like so:
-
 ```yaml
 global:
     Publisher: "ACCESS-NRI"
@@ -73,7 +80,7 @@ global:
 > Jinja template variables **must be quoted** and as a consequence all are saved
 > as string attributes in the netCDF variable
 
-### Filename based dynamic templating
+#### Filename
 
 Often important file level properties are encoded in filenames. This is not an optimal
 solution, but comes about because it is not possible to alter the model code to inject
@@ -105,32 +112,38 @@ regex expressions, only those that match will return variables that can be used 
 jinja template variables. Unused variables are ignored, and in the case of identical
 named groups in different regexes, later defined regexes override previous ones.
 
-### User defined template variables
+#### User defined template variables
 
-User defined template variables are supported as *datafiles*: yaml files with
-key/values. The keys are accessible through a namespace defined as the 
+User defined template variables can be defined in two ways, in *datafiles* or directly
+as command line arguments.  
+
+##### Datafiles 
+
+Yaml formatted *datafiles* are specified via `-d/--datafiles` command line argument. They
+should be simple string key/value pairs. Values that are lists are converted to comma
+separated (CSV) strings. The keys are accessible through a namespace defined as the 
 [stem of the yaml filename](https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.stem)
 they are read from.
 
 For example:
 
-With a datafile `job.yaml`
+and `addmeta` invoked like so
+```bash
+addmeta -d job.yaml -m meta.yaml file.nc
+```
+and datafile `job.yaml`
 ```yaml
 SHELL: '/bin/bash'
 pbs_id: '1234567'
 ```
-and metadata file`meta.yaml`
+and metadata file `meta.yaml`
 ```yaml
 global:
     license: 'CC-BY-4.0'
     shell: {{ job.SHELL }}
     id: {{ job.pbs_id }}
 ```
-and `addmeta` invoked like so
-```bash
-addmeta -d job.yaml -m meta.yaml file.nc
-```
-`file.nc` will have global metadata that looks something like this:
+`file.nc` will have global metadata:
 ```
 // global attributes:
 		:license = "CC-BY-4.0" ;
@@ -144,6 +157,33 @@ is required, but the key needs to be different.
 Multiple datafiles can be specified, and the variables from each will be accessible
 in a namespace defined by the 
 [stem of the filename](https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.stem).
+
+#### Command line
+
+Template variables can also be directly specified via the command line option `--datavar`
+and can be accessed in the special namespace `__argdata__`. For example:
+
+Using the example above with a modified metadata file `meta.yaml`
+```yaml
+global:
+    license: 'CC-BY-4.0'
+    shell: {{ job.SHELL }}
+    id: {{ job.pbs_id }}
+    frequency: {{ __argdata__.freq }}
+```
+and adding a single `--datavar freq='1daily'` option:
+```bash
+addmeta -d job.yaml -m meta.yaml --datavar frequency='1daily' file.nc
+```
+`file.nc` will have global metadata
+```
+// global attributes:
+		:license = "CC-BY-4.0" ;
+		:id = "1234567";
+		:shell = "/bin/bash";
+		:frequency = "1daily";
+```
+Multiple variables can be defined in this way with multiple `--datavar` options.
 
 ### metadata.yaml support
 
@@ -216,9 +256,12 @@ e.g.
 -m=meta_ocean_variable.yaml
 # Extract frequency from filename 
 --fn-regex=.*\.(?P<frequency>.*)\.mean\.\d+-\d+\.nc$
-# Apply to all ocean data in output subdirectory
-output/ocean_*.nc
+# Apply to all ocean data in $OUTPUTDIR directory (defined at runtime)
+${OUTPUTDIR}/output/ocean_*.nc
 ```
+The use of environment variables for files paths is supported, however
+absolute paths are recommended as `addmeta` tries to resolve relative paths
+relative to the location of the command file, which that could lead to errors.
 
 > [!CAUTION]
 > Do not quote regex strings in a command file as above. String quoting is still
@@ -228,3 +271,4 @@ output/ocean_*.nc
 > does not allow mixing of command line options and positional arguments. So
 > all the references to netCDF files need to come at the end of the argument
 > list. 
+
