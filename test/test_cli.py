@@ -57,6 +57,7 @@ def test_cmdlinearg_from_file(mock_main, touch_nc):
               datavar=[],
               sort=False,
               verbose=False, 
+              update_history=False,
               files=touch_nc[0:2],
               )
 
@@ -115,4 +116,5 @@ def test_datavar_option(mock_main, touch_nc):
                             datavar=['one=1', "'two=2 words'"], 
                             sort=False, 
                             verbose=False, 
+                            update_history=False,
                             files=['test/ocean_1.nc'])
