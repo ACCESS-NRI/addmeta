@@ -175,6 +175,7 @@ addmeta -d job.yaml -m meta.yaml --datavar frequency='1daily' file.nc
 		:shell = "/bin/bash";
 		:frequency = "1daily";
 ```
+Multiple variables can be defined in this way with multiple `--datavar` options.
 
 ### metadata.yaml support
 
