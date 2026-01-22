@@ -100,7 +100,7 @@ def update_history_attr(group, history, verbose=False):
 
     # Grab the previous history if it exists
     if "history" in group.ncattrs():
-        history = "\n".join(group.getncattr("history"), history)
+        history = "\n".join([group.getncattr("history"), history])
 
     # Update the attribute
     group.setncattr("history", history)
