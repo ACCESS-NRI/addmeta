@@ -105,7 +105,6 @@ def test_missing_cmdlinearg_file():
 @patch('addmeta.cli.main')
 def test_datavar_option(mock_main, touch_nc):
 
-    # args = [f"--datavar one=1 --datavar='two=2 words'", 'file.nc']
     args = ["--datavar","one=1","--datavar='two=2 words'", touch_nc[0]]
 
     assert addmeta.cli.main_parse_args(args) == Namespace(cmdlineargs=None, 
