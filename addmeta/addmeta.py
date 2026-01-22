@@ -22,10 +22,6 @@ import cmdline_provenance
 from . import _version
 
 
-# History message extracted here to enable testing
-HISTORY_CREATED_MESSAGE = "History attribute created my addmeta"
-
-
 # From https://gist.github.com/angstwad/bf22d1822c38a92ec0a9
 def dict_merge(dct, merge_dct):
     """ Recursive dict merge. Inspired by :meth:``dict.update()``, instead of
@@ -125,7 +121,7 @@ def update_history_attr(group, verbose=False):
     if "history" in group.ncattrs():
         history = group.getncattr("history")
     else:
-        history = HISTORY_CREATED_MESSAGE
+        history = ""
 
     # Create the updated history attribute
     history = _build_history(previous_history=history)

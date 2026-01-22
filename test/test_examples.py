@@ -27,7 +27,7 @@ import shutil
 
 import jinja2
 
-from addmeta import cli, HISTORY_CREATED_MESSAGE
+from addmeta import cli
 from common import runcmd, get_meta_data_from_file, make_nc as make_nc_common, make_env_data, payu_run_id
 
 @pytest.fixture
@@ -397,8 +397,7 @@ def test_history_creation(tmp_path, make_nc_common):
 
     history_lines = actual['history'].split('\n')
 
-    assert len(history_lines) == 2
-    assert history_lines[-1] == HISTORY_CREATED_MESSAGE
+    assert len(history_lines) == 1
 
 def test_history_update(tmp_path, make_nc_common):
     testfile = make_nc_common
@@ -409,5 +408,5 @@ def test_history_update(tmp_path, make_nc_common):
 
     history_lines = actual['history'].split('\n')
 
-    assert len(history_lines) == 3
-    assert history_lines[-1] == HISTORY_CREATED_MESSAGE
+    assert len(history_lines) == 2
+  
