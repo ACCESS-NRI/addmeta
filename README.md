@@ -136,7 +136,7 @@ and datafile `job.yaml`
 SHELL: '/bin/bash'
 pbs_id: '1234567'
 ```
-and metadata file`meta.yaml`
+and metadata file `meta.yaml`
 ```yaml
 global:
     license: 'CC-BY-4.0'
@@ -163,7 +163,15 @@ in a namespace defined by the
 Template variables can also be directly specified via the command line option `--datavar`
 and can be accessed in the special namespace `__argdata__`. For example:
 
-Using the example above and adding a single `--datavar frequency='1daily'` option:
+Using the example above with a modified metadata file `meta.yaml`
+```yaml
+global:
+    license: 'CC-BY-4.0'
+    shell: {{ job.SHELL }}
+    id: {{ job.pbs_id }}
+    frequency: {{ __argdata__.freq }}
+```
+and adding a single `--datavar freq='1daily'` option:
 ```bash
 addmeta -d job.yaml -m meta.yaml --datavar frequency='1daily' file.nc
 ```
@@ -251,7 +259,9 @@ e.g.
 # Apply to all ocean data in $OUTPUTDIR directory (defined at runtime)
 ${OUTPUTDIR}/output/ocean_*.nc
 ```
-The use of environment variables for files arguments is supported
+The use of environment variables for files paths is supported, however
+absolute paths are recommended as `addmeta` tries to resolve relative paths
+relative to the location of the command file, which that could lead to errors.
 
 > [!CAUTION]
 > Do not quote regex strings in a command file as above. String quoting is still
@@ -261,3 +271,4 @@ The use of environment variables for files arguments is supported
 > does not allow mixing of command line options and positional arguments. So
 > all the references to netCDF files need to come at the end of the argument
 > list. 
+
