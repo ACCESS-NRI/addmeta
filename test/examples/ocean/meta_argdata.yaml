@@ -1,0 +1,3 @@
+global:
+    command_line_arg_data_1: "{{ __argdata__.cmd1 }}"
+    command_line_arg_data_2: "{{ __argdata__.cmd2 }}"
