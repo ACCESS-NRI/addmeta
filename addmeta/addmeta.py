@@ -10,16 +10,12 @@ import csv
 from datetime import datetime, timezone
 import io
 from pathlib import Path
-from platform import python_version
 import re
-from sys import argv
 from warnings import warn
 
 from jinja2 import Template, StrictUndefined, UndefinedError
 import netCDF4 as nc
 import yaml
-import cmdline_provenance
-from . import _version
 
 
 # From https://gist.github.com/angstwad/bf22d1822c38a92ec0a9
@@ -95,43 +91,25 @@ def get_file_metadata(filename):
     return metadata
 
 
-def _build_history(previous_history=""):
-    if previous_history != "":
-        previous_history = "\n" + previous_history
-
-    time_stamp = datetime.now(timezone.utc).isoformat(timespec='seconds')
-    python_exe = f"python{python_version()}"
-
-    # The last argument is always the list of files which can be very long and is
-    # inplicit in the file itself
-    # FIXME: This isn't fool proof need a better way to remove the files
-    args = " ".join([a for a in argv if a[-3:] != '.nc'])
-
-    addmeta_version = _version.get_versions()['version']
-
-    return f"{time_stamp} : addmeta {addmeta_version} : {python_exe} {args}{previous_history}"
-
-
-def update_history_attr(group, verbose=False):
+def update_history_attr(group, history, verbose=False):
     """
     Update the history attribute with info on this invocation of addmeta.
     Create the history attirbute if it doesn't exist yet.
     """
-    # Grab the history if it exists
+    # Grab the previous history if it exists
     if "history" in group.ncattrs():
-        history = group.getncattr("history")
+        previous_history = "\n" + group.getncattr("history")
     else:
-        history = ""
+        previous_history = ""
 
-    # Create the updated history attribute
-    history = _build_history(previous_history=history)
+    new_history = f"{history}{previous_history}"
 
     # Update the attribute
-    if verbose: print(f"      + history: {history}")
-    group.setncattr("history", history)
+    if verbose: print(f"      + history: {new_history}")
+    group.setncattr("history", new_history)
 
 
-def add_meta(ncfile, metadict, template_vars, sort_attrs=False, update_history=False, verbose=False):
+def add_meta(ncfile, metadict, template_vars, sort_attrs=False, history=None, verbose=False):
     """
     Add meta data from a dictionary to a netCDF file
     """
@@ -145,8 +123,8 @@ def add_meta(ncfile, metadict, template_vars, sort_attrs=False, update_history=F
                     set_attribute(rootgrp.variables[var], attr, value, template_vars)
 
     # Update (or create) the history attribute
-    if update_history:
-        update_history_attr(rootgrp, verbose=verbose)
+    if history:
+        update_history_attr(rootgrp, history, verbose=verbose)
 
     # Set global meta data
     if "global" in metadict:
@@ -234,7 +212,7 @@ def load_data_files(datafiles):
 
     return namespace_dict
 
-def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, update_history=False, verbose=False):
+def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, history=None, verbose=False):
     """
     Add meta data from 1 or more yaml formatted files to one or more
     netCDF files
@@ -260,7 +238,7 @@ def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, upd
             metadata,
             template_vars,
             sort_attrs=sort_attrs,
-            update_history=update_history,
+            history=history,
             verbose=verbose
         )
         
