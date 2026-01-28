@@ -19,6 +19,8 @@ dependencies = [
     "netcdf4",
     "pyyaml",
     "Jinja2",
+    "json_ref_dict",
+    "jsonschema",
 ]
 
 [project.optional-dependencies]
