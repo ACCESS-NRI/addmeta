@@ -27,7 +27,7 @@ def get_metadata_from_file(filepath):
     return d
 
 
-def _is_url(s):
+def is_url(s):
     try:
         result = urlparse(s)
         return all([result.scheme, result.netloc])
@@ -36,7 +36,7 @@ def _is_url(s):
 
 
 def retrieve_from_filesystem_or_httpx(path_or_url):
-    if _is_url(path_or_url):
+    if is_url(path_or_url):
         response = httpx.get(path_or_url)
         contents = response.json()
     else:
