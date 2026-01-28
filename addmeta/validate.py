@@ -6,7 +6,7 @@ from jsonschema import validate
 from netCDF4 import Dataset
 
 
-def get_meta_data_from_file(filepath):
+def get_metadata_from_file(filepath):
     """
     Get the global and variable attributes from a netcdf file and return them
     as a nested dictionary.
@@ -48,7 +48,7 @@ def get_schema(schema_source):
 
 
 def validate_file(filepath, schema):
-    metadata = get_meta_data_from_file(filepath)
+    metadata = get_metadata_from_file(filepath)
 
     # Validate with raise an ValidationError if f is non-compliant
     validate(metadata, schema)
