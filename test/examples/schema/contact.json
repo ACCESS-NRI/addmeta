@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "global/contact.json",
+  "title": "contact",
+  "description": "Email address or other contact details for who to contact regarding this data.",
+  "examples": [ "access.nri@anu.edu.au", "John Smith (john.smith@email.com)" ],
+  "type": "string"
+}

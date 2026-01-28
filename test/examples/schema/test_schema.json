@@ -1,0 +1,26 @@
+{
+  "$id": "test_schema",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Test schema for addmeta validate",
+  "description": "A schema for testing",
+  "type": "object",
+  "properties": {
+    "global": {
+        "properties": {
+          "unlikelytobeoverwritten": {
+            "type": "string"
+          },
+          "Publisher": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "unlikelytobeoverwritten",
+          "Publisher"
+        ]
+    }
+  },
+  "required": [
+    "global"
+  ]
+}
