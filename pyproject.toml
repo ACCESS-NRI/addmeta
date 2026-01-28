@@ -38,6 +38,7 @@ Repository = "https://github.com/ACCESS-NRI/addmeta"
 
 [project.scripts]
 addmeta = "addmeta.cli:main_argv"
+validatemeta = "addmeta.validate:main"
 
 [build-system]
 build-backend = "setuptools.build_meta"
