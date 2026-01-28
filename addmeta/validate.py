@@ -47,6 +47,13 @@ def get_schema(schema_source):
             return json.load(f)
 
 
+def validate_file(filepath, schema):
+    metadata = get_meta_data_from_file(filepath)
+
+    # Validate with raise an ValidationError if f is non-compliant
+    validate(metadata, schema)
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         prog="validate",
@@ -76,10 +83,7 @@ def main():
         if args.verbose:
             print(f"Validating {f}")
 
-        metadata = get_meta_data_from_file(f)
-
-        # Validate with raise an ValidationError if f is non-compliant
-        validate(metadata, schema)
+        validate_file(f, schema)
 
 
 if __name__ == "__main__":
