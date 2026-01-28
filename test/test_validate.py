@@ -21,10 +21,14 @@ limitations under the License.
 import numpy as np
 import pytest
 import jsonschema
+import referencing
 
-from addmeta.validate import get_metadata_from_file, get_schema, validate_file
+from addmeta.validate import get_metadata_from_file, get_schema_validator, validate_file
 
 from common import make_nc
+
+
+ACCESS_OUTPUT_SCHEMA_URL = "https://raw.githubusercontent.com/ACCESS-NRI/schema/refs/heads/main/au.org.access-nri/model/output/file-metadata/2-0-0/2-0-0.json"
 
 
 def test_get_metadata_from_file(make_nc):
@@ -57,30 +61,34 @@ def test_get_metadata_from_file(make_nc):
 @pytest.mark.parametrize(
     "schema_source",
     [
-        "https://raw.githubusercontent.com/ACCESS-NRI/schema/refs/heads/main/au.org.access-nri/model/output/file-metadata/2-0-0/2-0-0.json",
+        ACCESS_OUTPUT_SCHEMA_URL,
         "test/examples/schema/test_schema.json",
     ],
 )
-def test_get_schema_from_url(schema_source):
-    schema = get_schema(schema_source)
+def test_get_schema(schema_source):
+    schema = get_schema_validator(schema_source)
 
-    # get_schema should run without exception and return a non-empty dict
+    # get_schema_validator should run without exception and return a non-empty dict
     assert schema
 
 
 @pytest.mark.parametrize(
-    "schema_source,is_valid",
+    "schema_source,expected_exception",
     [
-        ("test/examples/schema/test_schema.json", True),
-        ("test/examples/schema/contact.json", False),
+        ("test/examples/schema/test_schema.json", None),
+        ("test/examples/schema/contact.json", jsonschema.exceptions.ValidationError),
+        (ACCESS_OUTPUT_SCHEMA_URL, jsonschema.exceptions.ValidationError),
+        ("not_a_real_file.json", referencing.exceptions.Unresolvable),
+        ("https://not_a_real_url.com/not_a_real_file.json", referencing.exceptions.Unresolvable),
     ],
 )
-def test_validate_file(schema_source, make_nc, is_valid):
+def test_validate_file(schema_source, make_nc, expected_exception):
     file = make_nc
-    schema = get_schema(schema_source)
+    schema = get_schema_validator(schema_source)
 
-    if is_valid:
+    if not expected_exception:
+        # Validate should pass without exception
         validate_file(file, schema)
     else:
-        with pytest.raises(jsonschema.exceptions.ValidationError):
+        with pytest.raises(expected_exception=expected_exception):
             validate_file(file, schema)

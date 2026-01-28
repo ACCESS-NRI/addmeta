@@ -1,9 +1,11 @@
 import argparse
 from urllib.parse import urlparse
+import httpx
 import json
-from json_ref_dict import materialize, RefDict
-from jsonschema import validate
+from jsonschema import Draft202012Validator
 from netCDF4 import Dataset
+from pathlib import Path
+from referencing import Registry, Resource
 
 
 def get_metadata_from_file(filepath):
@@ -25,33 +27,43 @@ def get_metadata_from_file(filepath):
     return d
 
 
-def get_schema(schema_source):
+def _is_url(s):
+    try:
+        result = urlparse(s)
+        return all([result.scheme, result.netloc])
+    except AttributeError:
+        return False
+
+
+def retrieve_from_filesystem_or_httpx(path_or_url):
+    if _is_url(path_or_url):
+        response = httpx.get(path_or_url)
+        contents = response.json()
+    else:
+        path = Path(path_or_url)
+        contents = json.loads(path.read_text())
+
+    return Resource.from_contents(contents)
+
+
+def get_schema_validator(schema_source):
     """
     Load a schema object from a URL (resolving json-schema refs) or from a
     single file.
 
     Returns the schema as a dictionary
     """
+    # Build the registry to resolve the refs
+    registry = Registry(retrieve=retrieve_from_filesystem_or_httpx)
 
-    def _is_url(s):
-        try:
-            result = urlparse(s)
-            return all([result.scheme, result.netloc])
-        except AttributeError:
-            return False
-
-    if _is_url(schema_source):
-        return materialize(RefDict(schema_source))
-    else:
-        with open(schema_source, "r") as f:
-            return json.load(f)
+    return Draft202012Validator({"$ref": schema_source}, registry=registry)
 
 
-def validate_file(filepath, schema):
+def validate_file(filepath, schema_validator):
     metadata = get_metadata_from_file(filepath)
 
-    # Validate with raise an ValidationError if f is non-compliant
-    validate(metadata, schema)
+    # Validate will raise an ValidationError if f is non-compliant
+    schema_validator.validate(metadata)
 
 
 def parse_args():
@@ -77,13 +89,13 @@ def parse_args():
 def main():
     args = parse_args()
 
-    schema = get_schema(args.schema)
+    schema_validator = get_schema_validator(args.schema)
 
     for f in args.files:
         if args.verbose:
             print(f"Validating {f}")
 
-        validate_file(f, schema)
+        validate_file(f, schema_validator)
 
 
 if __name__ == "__main__":
