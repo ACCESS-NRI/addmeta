@@ -30,7 +30,7 @@ def get_metadata_from_file(filepath):
 def is_url(s):
     try:
         result = urlparse(s)
-        return all([result.scheme, result.netloc])
+        return result.scheme != '' and result.netloc != ''
     except AttributeError:
         return False
 
