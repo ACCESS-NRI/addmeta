@@ -51,7 +51,7 @@ def get_schema_validator(schema_source):
     Load a schema object from a URL (resolving json-schema refs) or from a
     single file.
 
-    Returns the schema as a dictionary
+    Returns the Validator for the schema
     """
     # Build the registry to resolve the refs
     registry = Registry(retrieve=retrieve_from_filesystem_or_httpx)
