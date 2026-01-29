@@ -60,10 +60,8 @@ def get_schema_validator(schema_source):
 
 
 def validate_file(filepath, schema_validator):
-    metadata = get_metadata_from_file(filepath)
-
-    # Validate will raise an ValidationError if f is non-compliant
-    schema_validator.validate(metadata)
+    # Validate will raise an ValidationError if filepath is non-compliant
+    schema_validator.validate(get_metadata_from_file(filepath))
 
 
 def parse_args():
@@ -80,7 +78,7 @@ def parse_args():
         required=True,
         help="The URL or file path of the schema to validate against.",
     )
-    parser.add_argument("files", help="netCDF files to validate", nargs="*")
+    parser.add_argument("files", help="netCDF files to validate", nargs="+")
     parser.add_argument("-v", "--verbose", help="Verbose output", action="store_true")
 
     return parser.parse_args()
