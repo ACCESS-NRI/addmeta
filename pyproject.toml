@@ -19,7 +19,7 @@ dependencies = [
     "netcdf4",
     "pyyaml",
     "Jinja2",
-    "httpx",
+    "requests",
     "jsonschema",
 ]
 

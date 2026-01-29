@@ -1,6 +1,6 @@
 import argparse
 from urllib.parse import urlparse
-import httpx
+import requests
 import json
 from jsonschema import Draft202012Validator
 from netCDF4 import Dataset
@@ -37,7 +37,7 @@ def is_url(s):
 
 def retrieve_from_filesystem_or_httpx(path_or_url):
     if is_url(path_or_url):
-        response = httpx.get(path_or_url)
+        response = requests.get(path_or_url)
         contents = response.json()
     else:
         path = Path(path_or_url)
