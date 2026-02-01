@@ -275,7 +275,7 @@ relative to the location of the command file, which that could lead to errors.
 ## Validation
 
 A validation tool is included with `addmeta` that will validate the global and
-variable metadata against a json-schema.
+variable attributes of netCDF files against a json-schema.
 `validatemeta` can be invoked with the following:
 
     $ validatemeta  -h
