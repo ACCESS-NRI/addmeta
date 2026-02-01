@@ -272,3 +272,26 @@ relative to the location of the command file, which that could lead to errors.
 > all the references to netCDF files need to come at the end of the argument
 > list. 
 
+## Validation
+
+A validation tool is included with `addmeta` that will validate the global and
+variable attributes of netCDF files against a json-schema.
+`validatemeta` can be invoked with the following:
+
+    $ validatemeta  -h
+    usage: validate [-h] -s [SCHEMA] [-v] files [files ...]
+
+    Validates a list of netCDF files against a json-schema. Will fail as soon as a non-compliant file is found.
+
+    positional arguments:
+    files                 netCDF files to validate
+
+    options:
+    -h, --help            show this help message and exit
+    -s [SCHEMA], --schema [SCHEMA]
+                            The URL or file path of the schema to validate against.
+    -v, --verbose         Verbose output
+
+The schema can be supplied as a file path or a URL and `json-schema` refs will be resolved.
+`validatemeta` will fail as soon as a non-compliant file is found and will print
+a message indicating what schema rule was broken.
