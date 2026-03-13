@@ -186,7 +186,18 @@ def set_attribute(group, attribute, value, template_vars, verbose=False):
         # Only valid to use jinja templates on strings
         if isinstance(value, str):
             try:
+                convert_to_number = '| number' in value
+                if convert_to_number:
+                    value = value.replace('| number', '')
+
                 value = Template(value, undefined=StrictUndefined).render(template_vars)
+
+                if convert_to_number:
+                    # Try to convert to an integer first then a float
+                    try:
+                        value = int(value)
+                    except ValueError:
+                        value = float(value)
             except UndefinedError as e:
                 warn(f"Skip setting attribute '{attribute}': {e}")
                 return
