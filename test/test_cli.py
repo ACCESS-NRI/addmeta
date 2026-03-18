@@ -56,6 +56,7 @@ def test_cmdlinearg_from_file(mock_main, touch_nc):
               fnregex=["'\\d{3]\\.'", "'(?:group\\d{3])\\.nc'"], 
               datavar=[],
               sort=False,
+              sort_variable=[],
               verbose=False, 
               update_history=False,
               files=touch_nc[0:2],
@@ -115,6 +116,7 @@ def test_datavar_option(mock_main, touch_nc):
                             fnregex=[], 
                             datavar=['one=1', "'two=2 words'"], 
                             sort=False, 
+                            sort_variable=[],
                             verbose=False, 
                             update_history=False,
                             files=['test/ocean_1.nc'])
