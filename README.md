@@ -210,10 +210,15 @@ commandline argument.
 
 ### Sorting Attributes
 
+Global and variable attributes can be sorted lexicographically ignoring-case by `addmeta` if needed.
+
 Global attributes can be sorted with the `-s`/`--sort` argument.
 
 Variables can be sorted with the `--sort-variable VARNAME` argument where `VARNAME` is the name of the variable to sort or a regex that will match the variable/s to sort.
-Multiple `--sort-variable` arguments can be used to specify more than one variable name and/or regex. Note that the `_FillValue` attribute of variables cannot be sorted.
+Multiple `--sort-variable` arguments can be used to specify more than one variable name and/or regex.
+
+> [!NOTE]
+> The `_FillValue` attribute of variables cannot be sorted.
 
 ## Invocation
 
