@@ -40,7 +40,7 @@ def runcmd(cmd, rwd=None, env=None):
     local_env = os.environ.copy()
     if env is not None:
         local_env.update(env)
-    subprocess.run(shlex.split(cmd),stderr=subprocess.STDOUT, cwd=cwd, env=local_env)
+    subprocess.run(shlex.split(cmd),stderr=subprocess.STDOUT, cwd=cwd, env=local_env, check=True)
 
 @pytest.fixture
 def make_nc(tmp_path):
