@@ -40,6 +40,9 @@ specified. If the same attribute is defined more than once, the last attribute
 file specified takes precedence. Like cascading style sheets this means default
 values can be given and overridden when necessary. 
 
+> [!NOTE]
+> The `_FillValue` attribute of variables can be removed but not added or changed by addmeta.
+
 ### Dynamic templating
 
 `addmeta` supports limited dynamic templating to allow injection of file specific
@@ -205,13 +208,20 @@ netCDF applications are expected to update the history attribute when modifying
 the files. This can be enabled in `addmeta` with the `--update-history`
 commandline argument.
 
+### Sorting Attributes
+
+Global attributes can be sorted with the `-s`/`--sort` argument.
+
+Variables can be sorted with the `--sort-variable VARNAME` argument where `VARNAME` is the name of the variable to sort or a regex that will match the variable/s to sort.
+Multiple `--sort-variable` arguments can be used to specify more than one variable name and/or regex. Note that the `_FillValue` attribute of variables cannot be sorted.
+
 ## Invocation
 
 `addmeta` provides a command line interface. Invoking with the `-h` flag prints
 a summay of how to invoke the program correctly.
 
     $ addmeta -h
-    usage: addmeta [-h] [-c CMDLINEARGS] [-m METAFILES] [-l METALIST] [-d DATAFILES] [-f FNREGEX] [-s] [-v] [files ...]
+    usage: addmeta [-h] [-c CMDLINEARGS] [-m METAFILES] [-l METALIST] [-d DATAFILES] [-f FNREGEX] [-s] [--sort-variable SORT_VARIABLE] [-v] [files ...]
 
     Add meta data to one or more netCDF files
 
@@ -231,6 +241,8 @@ a summay of how to invoke the program correctly.
     -f FNREGEX, --fnregex FNREGEX
                             Extract metadata from filename using regex
     -s, --sort            Sort all keys lexicographically, ignoring case
+    --sort-variable SORT_VARIABLE
+                            Sort given variables' attributes lexicographically, ignoring case. Use variable name or regex matching names.
     --update-history      Update or create the history global attribute
     -v, --verbose         Verbose output
 
