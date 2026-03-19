@@ -41,7 +41,7 @@ file specified takes precedence. Like cascading style sheets this means default
 values can be given and overridden when necessary. 
 
 > [!NOTE]
-> The `_FillValue` attribute of variables can be removed but not added or changed by addmeta.
+> The `_FillValue` attribute of variables can be removed but not added or changed by `addmeta`.
 
 ### Dynamic templating
 
