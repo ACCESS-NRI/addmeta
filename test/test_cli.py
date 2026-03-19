@@ -105,18 +105,42 @@ def test_missing_cmdlinearg_file2():
        addmeta.cli.main(addmeta.cli.main_parse_args(args))
 
 @patch('addmeta.cli.main')
-def test_datavar_option(mock_main, touch_nc):
+@pytest.mark.parametrize("args,expected_namespace",
+    [
+        # Test datavar option
+        pytest.param(
+            ["--datavar","one=1","--datavar='two=2 words'"],
+            Namespace(cmdlineargs=None, 
+                metafiles=None, 
+                metalist=None, 
+                datafiles=None, 
+                fnregex=[], 
+                datavar=['one=1', "'two=2 words'"], 
+                sort=False, 
+                sort_variable=[],
+                verbose=False, 
+                update_history=False,
+                files=['test/ocean_1.nc'])
+        ),
+        # Test --sort-variable option
+        pytest.param(
+            ["--sort-variable","var1","--sort-variable=var2", "--sort-variable", "multiple words"],
+            Namespace(cmdlineargs=None, 
+                metafiles=None, 
+                metalist=None, 
+                datafiles=None, 
+                fnregex=[], 
+                datavar=[], 
+                sort=False, 
+                sort_variable=["var1", "var2", "multiple words"],
+                verbose=False, 
+                update_history=False,
+                files=['test/ocean_1.nc'])
+        ),
+    ]
+)
+def test_options(mock_main, touch_nc, args, expected_namespace):
 
-    args = ["--datavar","one=1","--datavar='two=2 words'", touch_nc[0]]
+    args = [*args, touch_nc[0]]
 
-    assert addmeta.cli.main_parse_args(args) == Namespace(cmdlineargs=None, 
-                            metafiles=None, 
-                            metalist=None, 
-                            datafiles=None, 
-                            fnregex=[], 
-                            datavar=['one=1', "'two=2 words'"], 
-                            sort=False, 
-                            sort_variable=[],
-                            verbose=False, 
-                            update_history=False,
-                            files=['test/ocean_1.nc'])
+    assert addmeta.cli.main_parse_args(args) == expected_namespace
