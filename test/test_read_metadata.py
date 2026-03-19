@@ -105,14 +105,22 @@ def test_list_from_file():
     fname = 'test/metalist'
     filelist = list_from_file(fname)
     assert(filelist == [Path('test/meta1.yaml'), Path('test/meta2.yaml')])
-           
-def test_add_meta(make_nc):
-    dict1 = read_metadata("test/meta1.yaml")
+
+@pytest.mark.parametrize("global_yaml,variable_yaml",
+    [
+        ("test/meta1.yaml", "test/meta_var1.yaml"),
+        # meta_var2.yaml includes the special attrs (similar to _FillValue)
+        # that are not protected by netCDF4 like _FillValue is
+        ("test/meta1.yaml", "test/meta_var2.yaml"),
+    ]
+)
+def test_add_meta(make_nc, global_yaml, variable_yaml):
+    dict1 = read_metadata(global_yaml)
     add_meta(make_nc, dict1, {})
 
     assert(dict1_in_dict2(dict1["global"], get_meta_data_from_file(make_nc)))
 
-    dict1 = read_metadata("test/meta_var1.yaml")
+    dict1 = read_metadata(variable_yaml)
     add_meta(make_nc, dict1, {})
 
     for var in dict1["variables"]:
@@ -151,3 +159,18 @@ def test_del_attributes(make_nc):
     assert( '_FillValue' not in attributes )
     assert( 'Tiddly' in attributes )
     assert( 'Kelvin' == attributes['units'] )
+
+def test_find_add_meta_FillValue(make_nc):
+    """
+    A duplicate of test_find_add_meta with _FillValue
+
+    Test that setting the global attr _FillValue is as normal and that setting
+    a variable _FillValue raises an exception.
+    """
+    find_and_add_meta( [make_nc], combine_meta(['test/meta2.yaml','test/meta1_FillValue.yaml']), {}, {})
+
+    dict1 = read_metadata("test/meta1.yaml")
+    assert(dict1_in_dict2(dict1["global"], get_meta_data_from_file(make_nc)))
+
+    with pytest.raises(AttributeError, match="_FillValue attribute must be set when variable is created"):
+        find_and_add_meta( [make_nc], combine_meta(['test/meta_var2_FillValue.yaml']), {}, {} )

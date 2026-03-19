@@ -1,0 +1,16 @@
+variables:
+    temp:
+      short_name: "temp"
+      units : "degrees Kelvin"
+      max : 600
+      min : -100
+      _A : "Might get sorted before _FillValue"
+      missing_value: "Is this varname protected like _FillValue?"
+      scale_factor: "Is this varname protected like _FillValue?"
+      add_offset: "Is this varname protected like _FillValue?"
+      _Netcdf4Dimid: "Is this varname protected like _FillValue?"
+      REFERENCE_LIST: "Is this varname protected like _FillValue?"
+      _FillValue: "Not allowed to set this"
+    Times:
+      funky_name: "It is totall time"
+      limits : 0

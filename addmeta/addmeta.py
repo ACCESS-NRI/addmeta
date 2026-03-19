@@ -290,8 +290,11 @@ def delete_group_attributes(ncgroup):
     deleted = {}
 
     for attr in ncgroup.ncattrs():
-        deleted[attr] = ncgroup.getncattr(attr)
-        ncgroup.delncattr(attr)
+        # Not allow to add _FillValue as attr after variable creation
+        # Thus can't add it back on while sorting
+        if not (isinstance(ncgroup, nc.Variable) and attr == "_FillValue"):
+            deleted[attr] = ncgroup.getncattr(attr)
+            ncgroup.delncattr(attr)
     
     return deleted
 
