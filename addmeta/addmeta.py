@@ -115,16 +115,9 @@ def add_meta(ncfile, metadict, template_vars, sort_attrs=False, sort_vars=[], hi
     if "variables" in metadict:
         for var, attr_dict in metadict["variables"].items():
             if var in rootgrp.variables:
-                for s_var in sort_vars:
-                    # Add ^ and $ to the regex if they're not already there
-                    # e.g. we don't want "time" to match "time_bnds" so we use "^time$"
-                    s_var = s_var if s_var[0] == "^" else "^" + s_var
-                    s_var = s_var if s_var[-1] == "$" else s_var + "$"
-                    
-                    if re.match(s_var, var):
-                        attr_dict = remove_update_sort_attrs(rootgrp.variables[var],
-                                                             attr_dict)
-                        break
+                if varname_in_regex_list(var, sort_vars):
+                    attr_dict = remove_update_sort_attrs(rootgrp.variables[var],
+                                                         attr_dict)
 
                 for attr, value in attr_dict.items():
                     set_attribute(rootgrp.variables[var], attr, value, template_vars, verbose=verbose, var=var)
@@ -251,7 +244,23 @@ def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, sor
             history=history,
             verbose=verbose
         )
-        
+
+def varname_in_regex_list(varname, varname_list):
+    """
+    Check if the given varname is present in the list of varnames regexs.
+    
+    Add ^ and $ to the regexs if not already there
+    e.g. we don't want "time" to match "time_bnds" so we use "^time$"
+    """
+    for varname_l in varname_list:
+        varname_l = varname_l if varname_l[0] == "^" else "^" + varname_l
+        varname_l = varname_l if varname_l[-1] == "$" else varname_l + "$"
+
+        if re.match(varname_l, varname):
+            return True
+
+    return False
+
 def skip_comments(file):
     """Skip lines that begin with a comment character (#) or are empty
     """
