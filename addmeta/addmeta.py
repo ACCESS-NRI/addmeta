@@ -106,7 +106,7 @@ def update_history_attr(group, history, verbose=False):
     group.setncattr("history", history)
 
 
-def add_meta(ncfile, metadict, template_vars, sort_attrs=False, sort_vars=[], history=None, verbose=False):
+def add_meta(ncfile, metadict, template_vars, sort_attrs=False, sort_vars=None, history=None, verbose=False):
     """
     Add meta data from a dictionary to a netCDF file
     """
@@ -214,7 +214,7 @@ def load_data_files(datafiles):
 
     return namespace_dict
 
-def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, sort_vars=[], history=None, verbose=False):
+def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, sort_vars=None, history=None, verbose=False):
     """
     Add meta data from 1 or more yaml formatted files to one or more
     netCDF files
@@ -245,19 +245,20 @@ def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, sor
             verbose=verbose
         )
 
-def varname_in_regex_list(varname, varname_list):
+def varname_in_regex_list(varname, varname_list=None):
     """
     Check if the given varname is present in the list of varnames regexs.
     
     Add ^ and $ to the regexs if not already there
     e.g. we don't want "time" to match "time_bnds" so we use "^time$"
     """
-    for varname_l in varname_list:
-        varname_l = varname_l if varname_l[0] == "^" else "^" + varname_l
-        varname_l = varname_l if varname_l[-1] == "$" else varname_l + "$"
+    if varname_list:
+        for varname_l in varname_list:
+            varname_l = varname_l if varname_l[0] == "^" else "^" + varname_l
+            varname_l = varname_l if varname_l[-1] == "$" else varname_l + "$"
 
-        if re.match(varname_l, varname):
-            return True
+            if re.match(varname_l, varname):
+                return True
 
     return False
 
