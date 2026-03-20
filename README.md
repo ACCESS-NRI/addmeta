@@ -205,6 +205,12 @@ netCDF applications are expected to update the history attribute when modifying
 the files. This can be enabled in `addmeta` with the `--update-history`
 commandline argument.
 
+### Renaming Variable & Dimensions
+
+`addmeta` also supports the renaming of variables and dimensions with the `--rename-variable` and `--rename-dimension` options.
+These options can be repeated to rename multiple variables and/or dimensions.
+The renaming operation occurs before variable metadata is applied, thus `addmeta` will attempt to add metadata using a variable's new name.
+
 ## Invocation
 
 `addmeta` provides a command line interface. Invoking with the `-h` flag prints
@@ -232,6 +238,10 @@ a summay of how to invoke the program correctly.
                             Extract metadata from filename using regex
     -s, --sort            Sort all keys lexicographically, ignoring case
     --update-history      Update or create the history global attribute
+    --rename-var OLD_NAME NEW_NAME
+                            Rename a variable. Repeat this option to rename multiple variables.
+    --rename-dim OLD_NAME NEW_NAME
+                            Rename a dimension. Repeat this option to rename multiple dimensions.
     -v, --verbose         Verbose output
 
 
