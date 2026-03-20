@@ -58,6 +58,8 @@ def test_cmdlinearg_from_file(mock_main, touch_nc):
               sort=False,
               verbose=False, 
               update_history=False,
+              rename_var=[],
+              rename_dim=[],
               files=touch_nc[0:2],
               )
 
@@ -117,4 +119,6 @@ def test_datavar_option(mock_main, touch_nc):
                             sort=False, 
                             verbose=False, 
                             update_history=False,
+                            rename_var=[],
+                            rename_dim=[],
                             files=['test/ocean_1.nc'])
