@@ -106,12 +106,21 @@ def update_history_attr(group, history, verbose=False):
     group.setncattr("history", history)
 
 
-def add_meta(ncfile, metadict, template_vars, sort_attrs=False, history=None, verbose=False):
+def add_meta(ncfile, metadict, template_vars, sort_attrs=False, history=None, rename_vars=[], rename_dims=[],
+             verbose=False):
     """
     Add meta data from a dictionary to a netCDF file
     """
 
     rootgrp = nc.Dataset(ncfile, "r+")
+
+    # Rename variables and dimensions
+    for old_name, new_name in rename_vars:
+        rootgrp.renameVariable(old_name, new_name)
+
+    for old_name, new_name in rename_dims:
+        rootgrp.renameDimension(old_name, new_name)
+
     # Add metadata to matching variables
     if "variables" in metadict:
         for var, attr_dict in metadict["variables"].items():
@@ -209,7 +218,8 @@ def load_data_files(datafiles):
 
     return namespace_dict
 
-def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, history=None, verbose=False):
+def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, history=None, rename_vars=[],
+                      rename_dims=[], verbose=False):
     """
     Add meta data from 1 or more yaml formatted files to one or more
     netCDF files
@@ -236,6 +246,8 @@ def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, his
             template_vars,
             sort_attrs=sort_attrs,
             history=history,
+            rename_vars=rename_vars,
+            rename_dims=rename_dims,
             verbose=verbose
         )
         
