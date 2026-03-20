@@ -179,6 +179,7 @@ def test_multisort(use_xarray, make_xarray_nc, make_nc):
         pytest.param("anyoldstring", [".*"], True),
         pytest.param("time", ["nottime", "time"], True),
         pytest.param("time_bnds", ["time"], False),
+        pytest.param("time_bnds", ["^time$"], False),
         pytest.param("time", ["time_bnds"], False),
         pytest.param("time", ["time.*"], True),
     ]

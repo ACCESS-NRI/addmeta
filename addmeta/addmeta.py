@@ -249,15 +249,11 @@ def varname_in_regex_list(varname, varname_list=None):
     """
     Check if the given varname is present in the list of varnames regexs.
     
-    Add ^ and $ to the regexs if not already there
-    e.g. we don't want "time" to match "time_bnds" so we use "^time$"
+    Uses re.fullmatch - we don't want "time" to match "time_bnds"
     """
     if varname_list:
         for varname_l in varname_list:
-            varname_l = varname_l if varname_l[0] == "^" else "^" + varname_l
-            varname_l = varname_l if varname_l[-1] == "$" else varname_l + "$"
-
-            if re.match(varname_l, varname):
+            if re.fullmatch(varname_l, varname):
                 return True
 
     return False
