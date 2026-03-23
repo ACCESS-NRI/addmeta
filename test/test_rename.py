@@ -20,10 +20,9 @@ limitations under the License.
 
 import pytest
 import netCDF4
-import xarray
+import yaml
 
-from addmeta import order_dict
-from common import runcmd, get_meta_data_from_file, make_nc
+from common import runcmd, make_nc
 
 def get_var_names(ncfile):
     with netCDF4.Dataset(ncfile, 'r') as ds:
@@ -32,6 +31,12 @@ def get_var_names(ncfile):
 def get_dim_names(ncfile):
     with netCDF4.Dataset(ncfile, 'r') as ds:
         return ds.dimensions.keys()
+
+def get_names(ncfile, var_or_dim):
+    if var_or_dim == "variable":
+        return get_var_names(ncfile)
+    else:
+        return get_dim_names(ncfile)
 
 @pytest.mark.parametrize(
     "name_tuples",
@@ -43,14 +48,21 @@ def get_dim_names(ncfile):
         [("Times", "time"), ("temp", "temperature")],
     ]
 )
-def test_rename_vars(make_nc, name_tuples):
+def test_rename_vars(tmp_path, make_nc, name_tuples):
     """
     Rename a list of variables given as a list of (old_name, new_name)
     """
-    cmd_names = [f"{old_name} {new_name}" for old_name, new_name in name_tuples]
-    cmd_str = "--rename-var " + " --rename-var ".join(cmd_names)
+    d = {
+        "rename": {
+            "variables": {k: v for k, v in name_tuples},
+        }
+    }
 
-    runcmd(f"addmeta {cmd_str} {make_nc}")
+    meta_path = tmp_path / "meta.yaml"
+    with open(meta_path, "w") as f:
+        yaml.dump(d, f)
+
+    runcmd(f"addmeta -m {meta_path} {make_nc}")
 
     var_names = get_var_names(make_nc)
 
@@ -68,17 +80,53 @@ def test_rename_vars(make_nc, name_tuples):
         [("x", "ex"), ("Times", "time"), ("y", "why")],
     ]
 )
-def test_rename_dims(make_nc, name_tuples):
+def test_rename_dims(tmp_path, make_nc, name_tuples):
     """
     Rename a list of dims given as a list of (old_name, new_name)
     """
-    cmd_names = [f"{old_name} {new_name}" for old_name, new_name in name_tuples]
-    cmd_str = "--rename-dim " + " --rename-dim ".join(cmd_names)
+    d = {
+        "rename": {
+            "dimensions": {k: v for k, v in name_tuples},
+        }
+    }
 
-    runcmd(f"addmeta {cmd_str} {make_nc}")
+    meta_path = tmp_path / "meta.yaml"
+    with open(meta_path, "w") as f:
+        yaml.dump(d, f)
+
+    runcmd(f"addmeta -m {meta_path} {make_nc}")
 
     dim_names = get_dim_names(make_nc)
 
     for old_name, new_name in name_tuples:
         assert old_name not in dim_names
         assert new_name in dim_names
+
+@pytest.mark.parametrize(
+    "var_or_dim", ["variable", "dimension"]
+)
+def test_rename_var_dim_missing(tmp_path, make_nc, var_or_dim):
+    """
+    Confirm that trying to rename a variable or dimension that doesn't exist
+    does not fail.
+    """
+    old_name = "thisdoesntexist"
+    new_name = "newname"
+    d = {
+        "rename": {
+            f"{var_or_dim}s": {
+                old_name: new_name
+            },
+        }
+    }
+
+    meta_path = tmp_path / "meta.yaml"
+    with open(meta_path, "w") as f:
+        yaml.dump(d, f)
+
+    runcmd(f"addmeta -m {meta_path} {make_nc}")
+
+    names = get_names(make_nc, var_or_dim)
+
+    assert old_name not in names
+    assert new_name not in names    

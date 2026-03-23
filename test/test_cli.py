@@ -58,8 +58,6 @@ def test_cmdlinearg_from_file(mock_main, touch_nc):
               sort=False,
               verbose=False, 
               update_history=False,
-              rename_var=[],
-              rename_dim=[],
               files=touch_nc[0:2],
               )
 
@@ -119,28 +117,4 @@ def test_datavar_option(mock_main, touch_nc):
                             sort=False, 
                             verbose=False, 
                             update_history=False,
-                            rename_var=[],
-                            rename_dim=[],
-                            files=['test/ocean_1.nc'])
-
-@patch('addmeta.cli.main')
-def test_rename_options(mock_main, touch_nc):
-
-    args = ["--rename-var", "var1", "var2",
-            "--rename-dim", "var3", "var4",
-            "--rename-var", "var5", "var6",
-            "--rename-dim", "var7", "var8",
-            touch_nc[0]]
-
-    assert addmeta.cli.main_parse_args(args) == Namespace(cmdlineargs=None, 
-                            metafiles=None, 
-                            metalist=None, 
-                            datafiles=None, 
-                            fnregex=[], 
-                            datavar=[], 
-                            sort=False, 
-                            verbose=False, 
-                            update_history=False,
-                            rename_var=[["var1", "var2"], ["var5", "var6"]],
-                            rename_dim=[["var3", "var4"], ["var7", "var8"]],
                             files=['test/ocean_1.nc'])

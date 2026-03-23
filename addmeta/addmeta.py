@@ -50,7 +50,7 @@ def read_metadata(fname):
     # Check if this appears to be a plain key/value yaml file rather
     # than a structured file with 'global' and 'variables' keywords
     assume_global = True
-    for key in ["variables", "global"]:
+    for key in ["variables", "global", "rename"]:
         if key in metadict and isinstance(metadict[key], dict):
             assume_global = False
             
@@ -106,8 +106,7 @@ def update_history_attr(group, history, verbose=False):
     group.setncattr("history", history)
 
 
-def add_meta(ncfile, metadict, template_vars, sort_attrs=False, history=None, rename_vars=[], rename_dims=[],
-             verbose=False):
+def add_meta(ncfile, metadict, template_vars, sort_attrs=False, history=None, verbose=False):
     """
     Add meta data from a dictionary to a netCDF file
     """
@@ -115,12 +114,16 @@ def add_meta(ncfile, metadict, template_vars, sort_attrs=False, history=None, re
     rootgrp = nc.Dataset(ncfile, "r+")
 
     # Rename variables and dimensions
-    for old_name, new_name in rename_vars:
-        rootgrp.renameVariable(old_name, new_name)
+    if "rename" in metadict:
+        rename_dict = metadict["rename"]
+        if "variables" in rename_dict:
+            for old_name, new_name in rename_dict["variables"].items():
+                rename_var_or_dim(rootgrp, old_name, new_name, is_var=True, verbose=verbose)
 
-    for old_name, new_name in rename_dims:
-        rootgrp.renameDimension(old_name, new_name)
-
+        if "dimensions" in rename_dict:
+            for old_name, new_name in rename_dict["dimensions"].items():
+                rename_var_or_dim(rootgrp, old_name, new_name, is_var=False, verbose=verbose)
+    
     # Add metadata to matching variables
     if "variables" in metadict:
         for var, attr_dict in metadict["variables"].items():
@@ -174,6 +177,23 @@ def array_to_csv(array):
         else:
             return f.getvalue()
 
+def rename_var_or_dim(group, old_name, new_name, is_var=True, verbose=False):
+    """
+    Rename a variable or dimensions in group from old_name to new_name.
+    Will try to rename a variable if is_var=True, otherwise will try to rename a
+    dimension
+    """
+    s = "variable" if is_var else "dimension"
+    try:
+        if is_var:
+            group.renameVariable(old_name, new_name)
+        else:
+            group.renameDimension(old_name, new_name)
+
+        if verbose: print(f"      ~ renamed {s} \"{old_name}\" to \"{new_name}\".")
+    except KeyError:
+        if verbose: print(f"      ~ {s} \"{old_name}\" not found, can't rename to \"{new_name}\"")
+
 def set_attribute(group, attribute, value, template_vars, verbose=False):
     """
     Small wrapper to select, delete, or set attribute depending 
@@ -218,8 +238,7 @@ def load_data_files(datafiles):
 
     return namespace_dict
 
-def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, history=None, rename_vars=[],
-                      rename_dims=[], verbose=False):
+def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, history=None, verbose=False):
     """
     Add meta data from 1 or more yaml formatted files to one or more
     netCDF files
@@ -246,8 +265,6 @@ def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, his
             template_vars,
             sort_attrs=sort_attrs,
             history=history,
-            rename_vars=rename_vars,
-            rename_dims=rename_dims,
             verbose=verbose
         )
         

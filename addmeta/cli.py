@@ -51,8 +51,6 @@ def parse_args(args):
     parser.add_argument("--datavar", help="Key/value pair to be added as data variable, e.g. --datavar 'var=value'", default=[], action='append')
     parser.add_argument("-s","--sort", help="Sort all keys lexicographically, ignoring case", action="store_true")
     parser.add_argument("--update-history", help="Update (or create) the history global attribute", action="store_true")
-    parser.add_argument("--rename-var", help="Rename a variable. Repeat this option to rename multiple variables.", default=[], action='append', nargs=2, metavar=('OLD_NAME', 'NEW_NAME'))
-    parser.add_argument("--rename-dim", help="Rename a dimension. Repeat this option to rename multiple dimensions.", default=[], action='append', nargs=2, metavar=('OLD_NAME', 'NEW_NAME'))
     parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
     parser.add_argument("files", help="netCDF files", nargs='*')
 
@@ -114,8 +112,6 @@ def main(args):
         args.fnregex,
         sort_attrs=args.sort,
         history=history,
-        rename_vars=args.rename_var,
-        rename_dims=args.rename_dim,
         verbose=verbose,
     )
 

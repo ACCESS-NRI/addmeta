@@ -14,6 +14,8 @@ section.
 
 If an attribute is listed with a missing value that attribute is deleted from the file.
 
+Variables and dimensions [renaming](#renaming-variables-and-dimensions) can also be described in this file.
+
 For example the following is an example of an attribute file:
 ```yaml
 global:
@@ -30,8 +32,13 @@ variables:
         long_name: "latitude coordinate"
         units: "degrees_north"
         standard_name: "latitude"
+rename:
+    variables:
+        T: time
+    dimensions:
+        T: time
 ```
-It will create (or replace) two global attributes: `Conventions` and `license`.
+`addmeta` will start by renaming the variable and dimension `T` to `time`. It will then create (or replace) two global attributes: `Conventions` and `license`.
 It will also create (or replace) attributes for two variables, `yt_ocean` and
 `geolat_t`, and delete the `_FillValue` attribute of `yt_ocean`.
 
@@ -205,11 +212,24 @@ netCDF applications are expected to update the history attribute when modifying
 the files. This can be enabled in `addmeta` with the `--update-history`
 commandline argument.
 
-### Renaming Variable & Dimensions
+### Renaming Variables and Dimensions
 
-`addmeta` also supports the renaming of variables and dimensions with the `--rename-variable` and `--rename-dimension` options.
-These options can be repeated to rename multiple variables and/or dimensions.
-The renaming operation occurs before variable metadata is applied, thus `addmeta` will attempt to add metadata using a variable's new name.
+`addmeta` supports the renaming of variables and dimensions which can be described in the metadata YAML files alongside global and variable attributes:
+```yaml
+rename:
+    variables:
+        old_var_name: new_var_name
+        old_var_name2: new_var_name2
+    dimensions:
+        old_dim_name: new_dim_name
+        old_dim_name2: new_dim_name2
+```
+
+The renaming operation occurs before variable metadata is applied, thus `addmeta` will attempt to add attributes using a variable's new name.
+`addmeta` will not fail if the original name of a variable or dimension does not exist in the file.
+
+> [!Note]
+> The dynamic templating available to attributes is not supported for variable and dimension renaming.
 
 ## Invocation
 
@@ -238,10 +258,6 @@ a summay of how to invoke the program correctly.
                             Extract metadata from filename using regex
     -s, --sort            Sort all keys lexicographically, ignoring case
     --update-history      Update or create the history global attribute
-    --rename-var OLD_NAME NEW_NAME
-                            Rename a variable. Repeat this option to rename multiple variables.
-    --rename-dim OLD_NAME NEW_NAME
-                            Rename a dimension. Repeat this option to rename multiple dimensions.
     -v, --verbose         Verbose output
 
 
