@@ -19,7 +19,6 @@ limitations under the License.
 """
 
 import pytest
-import netCDF4
 import xarray
 
 from addmeta import order_dict
@@ -170,3 +169,45 @@ def test_multisort(use_xarray, make_xarray_nc, make_nc):
     assert actual == expected
     # Check the order of the attrs is correct
     assert list(actual.keys()) == list(expected.keys())
+
+@pytest.mark.parametrize("yaml,attr_lists",
+    [
+        (
+            "test/meta_var1.yaml",
+            {
+                "temp": ["units", "_FillValue", "missing_value", "long_name", "short_name", "max", "min"],
+                "Times": ["standard_name", "units", "calendar", "funky_name", "limits"],
+            }
+        ),
+        # meta_var2.yaml includes "_A" which _should_ get sorted infront of "_FillValue"
+        # meta_var2.yaml also adds a bunch of special-ish attrs names that could have been protected but don't seem to be
+        (
+            "test/meta_var2.yaml",
+            {
+                "temp": ["units", "_FillValue", "missing_value", "long_name", "short_name", "max", "min", "_A", "scale_factor", "add_offset", "_Netcdf4Dimid", "REFERENCE_LIST"],
+                "Times": ["standard_name", "units", "calendar", "funky_name", "limits"],
+            }
+        ),
+    ]
+)
+@pytest.mark.parametrize("do_sort", [True, False])
+def test_var_sorting(make_nc, yaml, attr_lists, do_sort):
+    """
+    Check the order of variable attrs are as expected given various command lines
+    """
+    sort_cmd = "-s" if do_sort else ""
+    runcmd(f"addmeta -v {sort_cmd} -m {yaml} {make_nc}")
+
+    for varname, attr_list in attr_lists.items():
+        actual = get_meta_data_from_file(make_nc, varname)
+
+        # Sort list items ignoring case
+        expected_attrs_order = sorted(attr_list, key=lambda item: item.casefold()) if do_sort else attr_list
+
+        if "_FillValue" in expected_attrs_order and do_sort:
+            # _FillValue is reserved and cannot be added after a Variable has been created
+            # Thus it cannot be sorted (i.e. removed and then added back on in order)
+            # So move _FillValue back to the front of the expected list
+            expected_attrs_order.insert(0, expected_attrs_order.pop(expected_attrs_order.index("_FillValue")))
+
+        assert list(actual.keys()) == expected_attrs_order
