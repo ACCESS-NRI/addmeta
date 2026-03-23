@@ -49,8 +49,7 @@ def parse_args(args):
     parser.add_argument("-d","--datafiles", help="One or more key/value data files in YAML format", action='append')
     parser.add_argument("-f","--fnregex", help="Extract metadata from filename using regex", default=[], action='append')
     parser.add_argument("--datavar", help="Key/value pair to be added as data variable, e.g. --datavar 'var=value'", default=[], action='append')
-    parser.add_argument("-s","--sort", help="Sort global attributes lexicographically, ignoring case", action="store_true")
-    parser.add_argument("--sort-variable", help="Sort given variables' attributes lexicographically, ignoring case. Use variable name or regex matching names.", default=[], action="append")
+    parser.add_argument("-s","--sort", help="Sort global and variable attributes lexicographically, ignoring case", action="store_true")
     parser.add_argument("--update-history", help="Update (or create) the history global attribute", action="store_true")
     parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
     parser.add_argument("files", help="netCDF files", nargs='*')
@@ -112,7 +111,6 @@ def main(args):
         kwdata,
         args.fnregex,
         sort_attrs=args.sort,
-        sort_vars=args.sort_variable,
         history=history,
         verbose=verbose,
     )

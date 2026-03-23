@@ -56,7 +56,6 @@ def test_cmdlinearg_from_file(mock_main, touch_nc):
               fnregex=["'\\d{3]\\.'", "'(?:group\\d{3])\\.nc'"], 
               datavar=[],
               sort=False,
-              sort_variable=[],
               verbose=False, 
               update_history=False,
               files=touch_nc[0:2],
@@ -117,22 +116,6 @@ def test_missing_cmdlinearg_file2():
                 fnregex=[], 
                 datavar=['one=1', "'two=2 words'"], 
                 sort=False, 
-                sort_variable=[],
-                verbose=False, 
-                update_history=False,
-                files=['test/ocean_1.nc'])
-        ),
-        # Test --sort-variable option
-        pytest.param(
-            ["--sort-variable","var1","--sort-variable=var2", "--sort-variable", "multiple words"],
-            Namespace(cmdlineargs=None, 
-                metafiles=None, 
-                metalist=None, 
-                datafiles=None, 
-                fnregex=[], 
-                datavar=[], 
-                sort=False, 
-                sort_variable=["var1", "var2", "multiple words"],
                 verbose=False, 
                 update_history=False,
                 files=['test/ocean_1.nc'])

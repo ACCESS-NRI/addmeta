@@ -212,10 +212,7 @@ commandline argument.
 
 Global and variable attributes can be sorted lexicographically ignoring-case by `addmeta` if needed.
 
-Global attributes can be sorted with the `-s`/`--sort` argument.
-
-Variables can be sorted with the `--sort-variable VARNAME` argument where `VARNAME` is the name of the variable to sort or a regex that will match the variable/s to sort.
-Multiple `--sort-variable` arguments can be used to specify more than one variable name and/or regex.
+Sorting for all global and variable attributes can be enabled with the `-s`/`--sort` argument.
 
 > [!NOTE]
 > The `_FillValue` attribute of variables cannot be sorted.
@@ -226,7 +223,7 @@ Multiple `--sort-variable` arguments can be used to specify more than one variab
 a summay of how to invoke the program correctly.
 
     $ addmeta -h
-    usage: addmeta [-h] [-c CMDLINEARGS] [-m METAFILES] [-l METALIST] [-d DATAFILES] [-f FNREGEX] [-s] [--sort-variable SORT_VARIABLE] [-v] [files ...]
+    usage: addmeta [-h] [-c CMDLINEARGS] [-m METAFILES] [-l METALIST] [-d DATAFILES] [-f FNREGEX] [-s] [-v] [files ...]
 
     Add meta data to one or more netCDF files
 
@@ -245,9 +242,7 @@ a summay of how to invoke the program correctly.
                             One or more key/value data files in YAML format
     -f FNREGEX, --fnregex FNREGEX
                             Extract metadata from filename using regex
-    -s, --sort            Sort all keys lexicographically, ignoring case
-    --sort-variable SORT_VARIABLE
-                            Sort given variables' attributes lexicographically, ignoring case. Use variable name or regex matching names.
+    -s, --sort            Sort global and variable attributes lexicographically, ignoring case
     --update-history      Update or create the history global attribute
     -v, --verbose         Verbose output
 

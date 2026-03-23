@@ -19,10 +19,9 @@ limitations under the License.
 """
 
 import pytest
-import netCDF4
 import xarray
 
-from addmeta import order_dict, varname_in_regex_list
+from addmeta import order_dict
 from common import runcmd, get_meta_data_from_file, make_nc
 
 @pytest.fixture
@@ -171,25 +170,6 @@ def test_multisort(use_xarray, make_xarray_nc, make_nc):
     # Check the order of the attrs is correct
     assert list(actual.keys()) == list(expected.keys())
 
-@pytest.mark.parametrize("varname,regex_list,outcome",
-    [
-        pytest.param("time", ["time"], True),
-        pytest.param("time", ["^time$"], True),
-        pytest.param("time", ["nottime"], False),
-        pytest.param("anyoldstring", [".*"], True),
-        pytest.param("time", ["nottime", "time"], True),
-        pytest.param("time_bnds", ["time"], False),
-        pytest.param("time_bnds", ["^time$"], False),
-        pytest.param("time", ["time_bnds"], False),
-        pytest.param("time", ["time.*"], True),
-    ]
-)
-def test_varname_regex_list(varname, regex_list, outcome):
-    """
-    Sorting of variables is enabled when a variable matches a regex in the given list
-    """
-    assert varname_in_regex_list(varname, regex_list) == outcome
-
 @pytest.mark.parametrize("yaml,attr_lists",
     [
         (
@@ -210,30 +190,21 @@ def test_varname_regex_list(varname, regex_list, outcome):
         ),
     ]
 )
-@pytest.mark.parametrize("cmdline_option,expect_var_sorted",
-    [
-        ("", {"Times": False, "temp": False}),
-        ("--sort-variable Times", {"Times": True, "temp": False}),
-        ("--sort-variable temp", {"Times": False, "temp": True}),
-        ("--sort-variable .*", {"Times": True, "temp": True}),
-        ("--sort-variable T.*", {"Times": True, "temp": False}),
-    ]
-)
-def test_var_sorting(make_nc, cmdline_option, yaml, attr_lists, expect_var_sorted):
+@pytest.mark.parametrize("do_sort", [True, False])
+def test_var_sorting(make_nc, yaml, attr_lists, do_sort):
     """
     Check the order of variable attrs are as expected given various command lines
     """
-    runcmd(f"addmeta {cmdline_option} -m {yaml} {make_nc}")
+    sort_cmd = "-s" if do_sort else ""
+    runcmd(f"addmeta -v {sort_cmd} -m {yaml} {make_nc}")
 
-    for varname, expect_sorted in expect_var_sorted.items():
+    for varname, attr_list in attr_lists.items():
         actual = get_meta_data_from_file(make_nc, varname)
 
-        attr_list = attr_lists[varname]
-
         # Sort list items ignoring case
-        expected_attrs_order = sorted(attr_list, key=lambda item: item.casefold()) if expect_sorted else attr_list
+        expected_attrs_order = sorted(attr_list, key=lambda item: item.casefold()) if do_sort else attr_list
 
-        if "_FillValue" in expected_attrs_order and expect_sorted:
+        if "_FillValue" in expected_attrs_order and do_sort:
             # _FillValue is reserved and cannot be added after a Variable has been created
             # Thus it cannot be sorted (i.e. removed and then added back on in order)
             # So move _FillValue back to the front of the expected list
