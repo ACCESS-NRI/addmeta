@@ -14,7 +14,7 @@ section.
 
 If an attribute is listed with a missing value that attribute is deleted from the file.
 
-Variables and dimensions [renaming](#renaming-variables-and-dimensions) can also be described in this file.
+Variable and dimension [renaming](#renaming-variables-and-dimensions) can also be described in these file.
 
 For example the following is an example of an attribute file:
 ```yaml
