@@ -94,7 +94,7 @@ def test_missing_cmdlinearg_file():
     with pytest.raises(SystemExit, match=f"Error: cmdlineargs file '{fname}' not found"):
        addmeta.cli.main_parse_args(args)
 
-def test_missing_cmdlinearg_file():
+def test_missing_cmdlinearg_file2():
 
     fname = "filedoesnotexist"
 
@@ -104,17 +104,26 @@ def test_missing_cmdlinearg_file():
        addmeta.cli.main(addmeta.cli.main_parse_args(args))
 
 @patch('addmeta.cli.main')
-def test_datavar_option(mock_main, touch_nc):
+@pytest.mark.parametrize("args,expected_namespace",
+    [
+        # Test datavar option
+        pytest.param(
+            ["--datavar","one=1","--datavar='two=2 words'"],
+            Namespace(cmdlineargs=None, 
+                metafiles=None, 
+                metalist=None, 
+                datafiles=None, 
+                fnregex=[], 
+                datavar=['one=1', "'two=2 words'"], 
+                sort=False, 
+                verbose=False, 
+                update_history=False,
+                files=['test/ocean_1.nc'])
+        ),
+    ]
+)
+def test_options(mock_main, touch_nc, args, expected_namespace):
 
-    args = ["--datavar","one=1","--datavar='two=2 words'", touch_nc[0]]
+    args = [*args, touch_nc[0]]
 
-    assert addmeta.cli.main_parse_args(args) == Namespace(cmdlineargs=None, 
-                            metafiles=None, 
-                            metalist=None, 
-                            datafiles=None, 
-                            fnregex=[], 
-                            datavar=['one=1', "'two=2 words'"], 
-                            sort=False, 
-                            verbose=False, 
-                            update_history=False,
-                            files=['test/ocean_1.nc'])
+    assert addmeta.cli.main_parse_args(args) == expected_namespace

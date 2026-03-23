@@ -70,6 +70,8 @@ def test_add_templated_meta(make_nc):
     assert(dict2["size"] == size_before)
     assert(dict2["modification_time"] == mtime_before)
 
+# This test generates ignorable warnings about __file__.parent & .name
+@pytest.mark.filterwarnings("ignore:.+'__file__' is undefined")
 def test_undefined_meta(make_nc):
 
     dict1 = read_yaml("test/meta_undefined.yaml")

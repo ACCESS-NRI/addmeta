@@ -40,6 +40,9 @@ specified. If the same attribute is defined more than once, the last attribute
 file specified takes precedence. Like cascading style sheets this means default
 values can be given and overridden when necessary. 
 
+> [!NOTE]
+> The `_FillValue` attribute of variables can be removed but not added or changed by `addmeta`.
+
 ### Dynamic templating
 
 `addmeta` supports limited dynamic templating to allow injection of file specific
@@ -205,6 +208,15 @@ netCDF applications are expected to update the history attribute when modifying
 the files. This can be enabled in `addmeta` with the `--update-history`
 commandline argument.
 
+### Sorting Attributes
+
+Global and variable attributes can be sorted lexicographically ignoring-case by `addmeta` if needed.
+
+Sorting for all global and variable attributes can be enabled with the `-s`/`--sort` argument.
+
+> [!NOTE]
+> The `_FillValue` attribute of variables cannot be sorted.
+
 ## Invocation
 
 `addmeta` provides a command line interface. Invoking with the `-h` flag prints
@@ -230,7 +242,7 @@ a summay of how to invoke the program correctly.
                             One or more key/value data files in YAML format
     -f FNREGEX, --fnregex FNREGEX
                             Extract metadata from filename using regex
-    -s, --sort            Sort all keys lexicographically, ignoring case
+    -s, --sort            Sort global and variable attributes lexicographically, ignoring case
     --update-history      Update or create the history global attribute
     -v, --verbose         Verbose output
 

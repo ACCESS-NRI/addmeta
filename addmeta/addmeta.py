@@ -110,14 +110,17 @@ def add_meta(ncfile, metadict, template_vars, sort_attrs=False, history=None, ve
     """
     Add meta data from a dictionary to a netCDF file
     """
-
     rootgrp = nc.Dataset(ncfile, "r+")
     # Add metadata to matching variables
     if "variables" in metadict:
         for var, attr_dict in metadict["variables"].items():
             if var in rootgrp.variables:
+                if sort_attrs:
+                    attr_dict = remove_update_sort_attrs(rootgrp.variables[var],
+                                                         attr_dict)
+
                 for attr, value in attr_dict.items():
-                    set_attribute(rootgrp.variables[var], attr, value, template_vars)
+                    set_attribute(rootgrp.variables[var], attr, value, template_vars, verbose=verbose, var=var)
 
     # Update (or create) the history attribute
     if history:
@@ -126,12 +129,10 @@ def add_meta(ncfile, metadict, template_vars, sort_attrs=False, history=None, ve
     # Set global meta data
     if "global" in metadict:
         if sort_attrs:
-            # Remove all global attributes, update with new attributes and then sort
-            # | merges two dicts preferring keys from the right
-            metadict['global'] = order_dict(delete_global_attributes(rootgrp) | metadict['global'])
+            metadict['global'] = remove_update_sort_attrs(rootgrp, metadict['global'])
 
         for attr, value in metadict['global'].items():
-            set_attribute(rootgrp, attr, value, template_vars, verbose)
+            set_attribute(rootgrp, attr, value, template_vars, verbose=verbose)
 
     rootgrp.close()
 
@@ -165,20 +166,24 @@ def array_to_csv(array):
         else:
             return f.getvalue()
 
-def set_attribute(group, attribute, value, template_vars, verbose=False):
+def set_attribute(group, attribute, value, template_vars, verbose=False, var=None,):
     """
     Small wrapper to select, delete, or set attribute depending 
     on value passed and expand jinja template variables
     """
+    attr_name = f"{var}:{attribute}" if var else attribute
+
     if value is None:
         if attribute in group.__dict__:
             try:
                 group.delncattr(attribute)
             except UndefinedError as e:
-                warn(f"Could not delete attribute '{attribute}': {e}")
+                warn(f"Could not delete attribute '{attr_name}': {e}")
                 return
             finally:
-                if verbose: print(f"      - {attribute}")
+                if verbose: print(f"      - {attr_name}")
+        else:
+            if verbose: print(f"      - {attr_name} (nothing to delete)")
     else:
         if isinstance(value, (list, tuple)):
             value = array_to_csv(value)
@@ -188,10 +193,10 @@ def set_attribute(group, attribute, value, template_vars, verbose=False):
             try:
                 value = Template(value, undefined=StrictUndefined).render(template_vars)
             except UndefinedError as e:
-                warn(f"Skip setting attribute '{attribute}': {e}")
+                warn(f"Skip setting attribute '{attr_name}': {e}")
                 return
             finally:
-                if verbose: print(f"      + {attribute}: {value}")
+                if verbose: print(f"      + {attr_name}: {value}")
 
         group.setncattr(attribute, value)
 
@@ -238,7 +243,7 @@ def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, his
             history=history,
             verbose=verbose
         )
-        
+
 def skip_comments(file):
     """Skip lines that begin with a comment character (#) or are empty
     """
@@ -253,15 +258,26 @@ def list_from_file(fname):
 
     return filelist
 
-def delete_global_attributes(rootgrp):
+def remove_update_sort_attrs(ncgroup, attr_dict):
     """
-    Delete all global attributes and return as dict
+    Remove the attributes from a netCDF group, merge the removed attrs with the
+    provided dictionary (favouring the dict) and return the sorted result.
+    """
+    # | merges two dicts preferring keys from the right
+    return order_dict(delete_group_attributes(ncgroup) | attr_dict)
+
+def delete_group_attributes(ncgroup):
+    """
+    Delete all attributes for a netCDF group and return as dict
     """
     deleted = {}
 
-    for attr in rootgrp.ncattrs():
-        deleted[attr] = rootgrp.getncattr(attr)
-        rootgrp.delncattr(attr)
+    for attr in ncgroup.ncattrs():
+        # Not allow to add _FillValue as attr after variable creation
+        # Thus can't add it back on while sorting
+        if not (isinstance(ncgroup, nc.Variable) and attr == "_FillValue"):
+            deleted[attr] = ncgroup.getncattr(attr)
+            ncgroup.delncattr(attr)
     
     return deleted
 
