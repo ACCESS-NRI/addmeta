@@ -187,7 +187,7 @@ Multiple variables can be defined in this way with multiple `--datavar` options.
 
 #### Number Templates
 
-In order for dynamically templated attributes to resolve to integers or floats rather than strings use the jinja-like filter `| number`.
+In order for dynamically templated attributes to resolve to integers or floats rather than strings use the Jinja-like filter `| number`.
 E.g. with the following datafile.yaml,
 ```yaml
 integer_val: 5
@@ -207,8 +207,8 @@ global:
     this_is_also_a_float: "{{ datafile.integer_val | float | number }}"
 ```
 
-- `| number` must be the last portion of the jinja template (i.e. the string between `{{` and `}}`)
-- `| number` is not valid jinja itself, it will be removed before resolving the template
+- `| number` must be the last portion of the Jinja template (i.e. the string between `{{` and `}}`)
+- `| number` is not valid Jinja itself, it will be removed before resolving the rest of the template with Jinja
 - When using `| number`, `addmeta` will attempt to resolve the value to an integer first, then a float.
 
 

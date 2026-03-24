@@ -212,7 +212,7 @@ def detect_number_filter(value):
     Otherwise return the value string and False
 
     - There might be multiple occurances of "| number"
-    - Number of whitespaces characters is unknown
+    - Number of whitespace characters is unknown
     """
     # Match "| number }}" with any number of whitespace between
     regx = r"(\|\s*number)\s*}}"
