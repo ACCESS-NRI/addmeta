@@ -195,7 +195,7 @@ def rename_var_or_dim(group, old_name, new_name, is_var=True, verbose=False):
     except KeyError:
         if verbose: print(f"      ~ {s} \"{old_name}\" not found, can't rename to \"{new_name}\"")
 
-def set_attribute(group, attribute, value, template_vars, verbose=False, var=None,):
+def set_attribute(group, attribute, value, template_vars, verbose=False, var=None):
     """
     Small wrapper to select, delete, or set attribute depending 
     on value passed and expand jinja template variables
