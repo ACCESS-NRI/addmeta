@@ -21,7 +21,7 @@ limitations under the License.
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
-import netCDF4 as nc
+import numpy as np
 import pytest
 
 from addmeta import read_yaml, read_metadata, add_meta, find_and_add_meta, isoformat
@@ -286,3 +286,93 @@ def test_now(make_nc):
     meta_now = datetime.strptime(now_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
     utc_now = datetime.now(timezone.utc)
     assert meta_now - utc_now < timedelta(minutes=1)
+
+@pytest.mark.parametrize(
+    "metadata,templates,expected,number_type",
+    [
+        # Test a raw number
+        ({"number": 5}, {}, {"number": 5}, np.int32),
+        # Test an templated integer
+        (
+            {"number": "{{ __template__.number | number }}"},
+            {"__template__": {"number": "5"}},
+            {"number": 5},
+            np.int32
+        ),
+        # Test an templated integer with underscored notation
+        (
+            {"number": "{{ __template__.number | number }}"},
+            {"__template__": {"number": "5_000_000"}},
+            {"number": 5000000},
+            np.int32
+        ),
+        # Test a templated float
+        (
+            {"number": "{{ __template__.number | number }}"},
+            {"__template__": {"number": "5.1"}},
+            {"number": 5.1},
+            np.float64
+        ),
+        # Test a templated float with no decimal point
+        ( 
+            {"number": "{{ __template__.number | number }}"},
+            {"__template__": {"number": "5."}},
+            {"number": 5.},
+            np.float64
+        ),
+        # Test a templated float in exponential notation
+        ( 
+            {"number": "{{ __template__.number | number }}"},
+            {"__template__": {"number": "1.5e5"}},
+            {"number": 1.5e5},
+            np.float64
+        ),
+        # Test a templated number without the fake jinja filter
+        (
+            {"number": "{{ __template__.number }}"},
+            {"__template__": {"number": "5.1"}},
+            {"number": "5.1"},
+            str
+        ),
+    ]
+)
+def test_number_templates(make_nc, metadata, templates, expected, number_type):
+    # Put the metadata under global
+    metadata = {"global": metadata}
+
+    # Add the attrs from make_nc to expected
+    common_attrs = {
+        "Publisher": "Will be overwritten",
+        "unlikelytobeoverwritten": "total rubbish",
+    }
+    expected.update(common_attrs)
+
+    find_and_add_meta([make_nc], metadata, templates, [])
+
+    actual = get_meta_data_from_file(make_nc)
+
+    assert actual == expected
+    assert isinstance(actual["number"], number_type)
+
+@pytest.mark.parametrize(
+    "metadata,templates",
+    [
+        # Test a string with the fake number jinja filter
+        (
+            {"number": "{{ __template__.number | number }}"},
+            {"__template__": {"number": "five"}},
+        ),
+        # Test a malformed float
+        (
+            {"number": "{{ __template__.number | number }}"},
+            {"__template__": {"number": "5.1.2"}},
+        ),
+    ]
+)
+def test_number_templates_failures(make_nc, metadata, templates):
+    # Put the metadata under global
+    metadata = {"global": metadata}
+
+    value = templates["__template__"]["number"]
+    with pytest.raises(ValueError, match=f"could not convert string to float: \'{value}\'"):
+        find_and_add_meta([make_nc], metadata, templates, [])
