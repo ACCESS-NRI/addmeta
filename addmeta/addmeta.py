@@ -186,9 +186,7 @@ def set_attribute(group, attribute, value, template_vars, verbose=False):
         # Only valid to use jinja templates on strings
         if isinstance(value, str):
             try:
-                convert_to_number = '| number' in value
-                if convert_to_number:
-                    value = value.replace('| number', '')
+                value, convert_to_number = detect_number_filter(value)
 
                 value = Template(value, undefined=StrictUndefined).render(template_vars)
 
@@ -205,6 +203,29 @@ def set_attribute(group, attribute, value, template_vars, verbose=False):
                 if verbose: print(f"      + {attribute}: {value}")
 
         group.setncattr(attribute, value)
+
+def detect_number_filter(value):
+    """
+    Look for the jinja-like filter "| number".
+    
+    If found return the value string with "| number" removed and True
+    Otherwise return the value string and False
+
+    - There might be multiple occurances of "| number"
+    - Number of whitespaces characters is unknown
+    """
+    # Match "| number }}" with any number of whitespace between
+    regx = r"(\|\s*number)\s*}}"
+    matches = re.findall(regx, value)
+    if matches:
+        # Remove the "| number" with however many spaces as captured by the regex
+        # Do this in a loop just in case there were multiple permutations of '| number'
+        for match in matches:
+            value = value.replace(match, '')
+
+        return value, True
+    else:
+        return value, False
 
 def serialise_dict_values(dictionary):
     """Serialise any list or arrays values in a dictionary"""
