@@ -50,7 +50,7 @@ def read_metadata(fname):
     # Check if this appears to be a plain key/value yaml file rather
     # than a structured file with 'global' and 'variables' keywords
     assume_global = True
-    for key in ["variables", "global"]:
+    for key in ["variables", "global", "rename"]:
         if key in metadict and isinstance(metadict[key], dict):
             assume_global = False
             
@@ -111,6 +111,18 @@ def add_meta(ncfile, metadict, template_vars, sort_attrs=False, history=None, ve
     Add meta data from a dictionary to a netCDF file
     """
     rootgrp = nc.Dataset(ncfile, "r+")
+
+    # Rename variables and dimensions
+    if "rename" in metadict:
+        rename_dict = metadict["rename"]
+        if "variables" in rename_dict:
+            for old_name, new_name in rename_dict["variables"].items():
+                rename_var_or_dim(rootgrp, old_name, new_name, is_var=True, verbose=verbose)
+
+        if "dimensions" in rename_dict:
+            for old_name, new_name in rename_dict["dimensions"].items():
+                rename_var_or_dim(rootgrp, old_name, new_name, is_var=False, verbose=verbose)
+    
     # Add metadata to matching variables
     if "variables" in metadict:
         for var, attr_dict in metadict["variables"].items():
@@ -166,7 +178,24 @@ def array_to_csv(array):
         else:
             return f.getvalue()
 
-def set_attribute(group, attribute, value, template_vars, verbose=False, var=None,):
+def rename_var_or_dim(group, old_name, new_name, is_var=True, verbose=False):
+    """
+    Rename a variable or dimensions in group from old_name to new_name.
+    Will try to rename a variable if is_var=True, otherwise will try to rename a
+    dimension
+    """
+    s = "variable" if is_var else "dimension"
+    try:
+        if is_var:
+            group.renameVariable(old_name, new_name)
+        else:
+            group.renameDimension(old_name, new_name)
+
+        if verbose: print(f"      ~ renamed {s} \"{old_name}\" to \"{new_name}\".")
+    except KeyError:
+        if verbose: print(f"      ~ {s} \"{old_name}\" not found, can't rename to \"{new_name}\"")
+
+def set_attribute(group, attribute, value, template_vars, verbose=False, var=None):
     """
     Small wrapper to select, delete, or set attribute depending 
     on value passed and expand jinja template variables
