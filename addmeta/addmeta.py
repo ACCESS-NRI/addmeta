@@ -215,7 +215,7 @@ def detect_number_filter(value):
     - Number of whitespace characters is unknown
     """
     # Match "| number }}" with any number of whitespace between
-    regx = r"(\|\s*number)\s*}}"
+    regx = re.compile(r"(\|\s*number)\s*}}")
     matches = re.findall(regx, value)
     if matches:
         # Remove the "| number" with however many spaces as captured by the regex
