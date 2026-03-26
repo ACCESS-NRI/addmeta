@@ -168,7 +168,7 @@ Multiple datafiles can be specified, and the variables from each will be accessi
 in a namespace defined by the 
 [stem of the filename](https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.stem).
 
-#### Command line
+##### Command line
 
 Template variables can also be directly specified via the command line option `--datavar`
 and can be accessed in the special namespace `__argdata__`. For example:
@@ -194,6 +194,33 @@ addmeta -d job.yaml -m meta.yaml --datavar freq='1daily' file.nc
 		:frequency = "1daily";
 ```
 Multiple variables can be defined in this way with multiple `--datavar` options.
+
+#### Number Templates
+
+In order for dynamically templated attributes to resolve to integers or floats rather than strings use the Jinja-like filter `| number`.
+E.g. with the following datafile.yaml,
+```yaml
+integer_val: 5
+float_val: 1.234
+```
+a metadata file similar to the following can be used,
+```yaml
+global:
+    # This non-dynamic attribute resolves to an integer
+    this_is_a_number: 5
+    # This dynamic attribute resolves to a string
+    this_is_a_string: "{{ datafile.integer }}"
+    # This dynamic attribute resolves to an integer
+    this_is_a_int: "{{ datafile.integer_val | number }}"
+    # These dynamic attributes resolve to floats
+    this_is_a_float: "{{ datafile.float_val | number }}"
+    this_is_also_a_float: "{{ datafile.integer_val | float | number }}"
+```
+
+- `| number` must be the last portion of the Jinja template (i.e. the string between `{{` and `}}`)
+- `| number` is not valid Jinja itself, it will be removed before resolving the rest of the template with Jinja
+- When using `| number`, `addmeta` will attempt to resolve the attribute's value to an integer first, then a float.
+
 
 ### metadata.yaml support
 

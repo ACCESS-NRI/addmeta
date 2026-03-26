@@ -21,10 +21,11 @@ limitations under the License.
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
-import netCDF4 as nc
+import numpy as np
+import jinja2
 import pytest
 
-from addmeta import read_yaml, read_metadata, add_meta, find_and_add_meta, isoformat
+from addmeta import read_yaml, read_metadata, add_meta, find_and_add_meta, isoformat, detect_number_filter
 from common import runcmd, make_nc, get_meta_data_from_file
 
 verbose = True
@@ -288,3 +289,212 @@ def test_now(make_nc):
     meta_now = datetime.strptime(now_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
     utc_now = datetime.now(timezone.utc)
     assert meta_now - utc_now < timedelta(minutes=1)
+
+@pytest.mark.parametrize(
+    "metadata,templates,expected,number_type",
+    [
+        # Test a raw number
+        ({"n": 5}, {}, {"n": 5}, np.int32),
+        # Test a templated integer
+        (
+            {"n": "{{ __template__.x | number }}"},
+            {"__template__": {"x": "5"}},
+            {"n": 5},
+            np.int32
+        ),
+        # Test a templated integer cast to a float with jinja
+        (
+            {"n": "{{ __template__.x | float | number }}"},
+            {"__template__": {"x": "5"}},
+            {"n": 5},
+            np.float64
+        ),
+        # Test a templated integer with no spaces
+        (
+            {"n": "{{__template__.x|number}}"},
+            {"__template__": {"x": "5"}},
+            {"n": 5},
+            np.int32
+        ),
+        # Test a templated integer with excessive spaces
+        (
+            {"n": "{{  __template__.x |      number}}"},
+            {"__template__": {"x": "5"}},
+            {"n": 5},
+            np.int32
+        ),
+        # Test a templated integer with newline and tab characters
+        (
+            {"n": "{{  __template__.x|\t\nnumber\n}}"},
+            {"__template__": {"x": "5"}},
+            {"n": 5},
+            np.int32
+        ),
+        # Test multiple "| numbers"
+        (
+            {"n": "{{  __template__.x | number}}{{  __template__.x | number}}"},
+            {"__template__": {"x": "5"}},
+            {"n": 55},
+            np.int32
+        ),
+        # Test multiple "| numbers" with varying whitespace
+        (
+            {"n": "{{__template__.x|number}}{{     __template__.x   |    number}}{{  __template__.x   |                number}}"},
+            {"__template__": {"x": "5"}},
+            {"n": 555},
+            np.int32
+        ),
+        # Test a templated integer without the jinja brackets
+        (
+            {"n": "__template__.x | number"},
+            {"__template__": {"x": "5"}},
+            {"n": "__template__.x | number"},
+            str
+        ),
+        # Test a templated integer with underscored notation
+        (
+            {"n": "{{ __template__.x | number }}"},
+            {"__template__": {"x": "5_000_000"}},
+            {"n": 5000000},
+            np.int32
+        ),
+        # Test a templated float
+        (
+            {"n": "{{ __template__.x | number }}"},
+            {"__template__": {"x": "5.1"}},
+            {"n": 5.1},
+            np.float64
+        ),
+        # Test a templated float that happens to be preceded by digits
+        (
+            {"n": "123{{ __template__.x | number }}"},
+            {"__template__": {"x": "5.1"}},
+            {"n": 1235.1},
+            np.float64
+        ),
+        # Test a templated float with no decimal point numbers
+        ( 
+            {"n": "{{ __template__.x | number }}"},
+            {"__template__": {"x": "5."}},
+            {"n": 5.},
+            np.float64
+        ),
+        # Test a templated float in exponential notation
+        ( 
+            {"n": "{{ __template__.x | number }}"},
+            {"__template__": {"x": "1.5e5"}},
+            {"n": 1.5e5},
+            np.float64
+        ),
+        # Test a templated number without the dummy jinja filter
+        (
+            {"n": "{{ __template__.x }}"},
+            {"__template__": {"x": "5.1"}},
+            {"n": "5.1"},
+            str
+        ),
+    ]
+)
+def test_number_templates(make_nc, metadata, templates, expected, number_type):
+    # Put the metadata under global
+    metadata = {"global": metadata}
+
+    # Add the attrs from make_nc to expected
+    common_attrs = {
+        "Publisher": "Will be overwritten",
+        "unlikelytobeoverwritten": "total rubbish",
+    }
+    expected.update(common_attrs)
+
+    print(metadata)
+    print(templates)
+    find_and_add_meta([make_nc], metadata, templates, [])
+
+    actual = get_meta_data_from_file(make_nc)
+
+    assert actual == expected
+    assert isinstance(actual["n"], number_type)
+
+@pytest.mark.parametrize(
+    "metadata,templates,failure_str",
+    [
+        # Test a string with the dummy number jinja filter
+        (
+            {"n": "{{ __template__.x | number }}"},
+            {"__template__": {"x": "five"}},
+            None
+        ),
+        # Test a malformed float
+        (
+            {"n": "{{ __template__.x | number }}"},
+            {"__template__": {"x": "5.1.2"}},
+            None
+        ),
+        # Test a valid float but with a string around it
+        (
+            {"n": "xx{{ __template__.x | number }}xx"},
+            {"__template__": {"x": "5.1"}},
+            "xx5.1xx"
+        ),
+    ]
+)
+def test_number_templates_failures(make_nc, metadata, templates, failure_str):
+    # Put the metadata under global
+    metadata = {"global": metadata}
+
+    value = templates["__template__"]["x"]
+
+    # If failure string hasn't been supplied just use the template value
+    failure_str = failure_str if failure_str else value
+    with pytest.raises(ValueError, match=f"could not convert string to float: \'{failure_str}\'"):
+        find_and_add_meta([make_nc], metadata, templates, [])
+
+@pytest.mark.parametrize(
+    "metadata,templates",
+    [
+        # Test with real jinja filter but without number last
+        (
+            {"n": "{{ __template__.x | number | float }}"},
+            {"__template__": {"x": "5.1"}},
+        ),
+    ]
+)
+def test_number_templates_failure_filter_order(make_nc, metadata, templates):
+    # Put the metadata under global
+    metadata = {"global": metadata}
+
+    with pytest.raises(jinja2.exceptions.TemplateAssertionError, match="No filter named \'number\'"):
+        find_and_add_meta([make_nc], metadata, templates, [])
+
+@pytest.mark.parametrize(
+    "input_string,expected",
+    [
+        # No "| number }}"
+        ("", ("", False)),
+        ("nothing to see here", ("nothing to see here", False)),
+        ("| number", ("| number", False)),
+        # "| number }}" with various whitespace
+        ("{{|number}}", ("{{}}", True)),
+        ("{{ | number}}", ("{{ }}", True)),
+        ("{{ |\tnumber }}", ("{{  }}", True)),
+        ("{{ |\n\tnumber\n }}", ("{{ \n }}", True)),
+        # A typical expected pattern for | number
+        ("{{ x | number }}", ("{{ x  }}", True)),
+        # Multiple templates
+        ("{{ x | number }}{{ x | number }}{{ x | number }}", ("{{ x  }}{{ x  }}{{ x  }}", True)),
+        # Multiple templates with varying whitespace
+        ("{{ x | number  }}{{ x |   number    }}{{ x |     number      }}", ("{{ x   }}{{ x     }}{{ x       }}", True)),
+        ("{{ x | number }}{{ x |\tnumber\t}}{{ x |\nnumber\n}}", ("{{ x  }}{{ x \t}}{{ x \n}}", True)),
+        # Stuff outside the template
+        ("something infront {{ x | number}}", ("something infront {{ x }}", True)),
+    ]
+)
+def test_detect_number_filter(input_string, expected):
+    """
+    Test detect_number_filter
+
+    Function looks for "| number }}" with varying whitespace and removes "| number"
+    """
+    actual = detect_number_filter(input_string)
+
+    assert actual == expected
