@@ -25,7 +25,7 @@ import numpy as np
 import jinja2
 import pytest
 
-from addmeta import read_yaml, read_metadata, add_meta, find_and_add_meta, isoformat
+from addmeta import read_yaml, read_metadata, add_meta, find_and_add_meta, isoformat, detect_number_filter
 from common import runcmd, make_nc, get_meta_data_from_file
 
 verbose = True
@@ -463,3 +463,36 @@ def test_number_templates_failure_filter_order(make_nc, metadata, templates):
 
     with pytest.raises(jinja2.exceptions.TemplateAssertionError, match="No filter named \'number\'"):
         find_and_add_meta([make_nc], metadata, templates, [])
+
+@pytest.mark.parametrize(
+    "input_string,expected",
+    [
+        # No "| number }}"
+        ("", ("", False)),
+        ("nothing to see here", ("nothing to see here", False)),
+        ("| number", ("| number", False)),
+        # "| number }}" with various whitespace
+        ("{{|number}}", ("{{}}", True)),
+        ("{{ | number}}", ("{{ }}", True)),
+        ("{{ |\tnumber }}", ("{{  }}", True)),
+        ("{{ |\n\tnumber\n }}", ("{{ \n }}", True)),
+        # A typical expected pattern for | number
+        ("{{ x | number }}", ("{{ x  }}", True)),
+        # Multiple templates
+        ("{{ x | number }}{{ x | number }}{{ x | number }}", ("{{ x  }}{{ x  }}{{ x  }}", True)),
+        # Multiple templates with varying whitespace
+        ("{{ x | number  }}{{ x |   number    }}{{ x |     number      }}", ("{{ x   }}{{ x     }}{{ x       }}", True)),
+        ("{{ x | number }}{{ x |\tnumber\t}}{{ x |\nnumber\n}}", ("{{ x  }}{{ x \t}}{{ x \n}}", True)),
+        # Stuff outside the template
+        ("something infront {{ x | number}}", ("something infront {{ x }}", True)),
+    ]
+)
+def test_detect_number_filter(input_string, expected):
+    """
+    Test detect_number_filter
+
+    Function looks for "| number }}" with varying whitespace and removes "| number"
+    """
+    actual = detect_number_filter(input_string)
+
+    assert actual == expected
