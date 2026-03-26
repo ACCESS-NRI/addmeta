@@ -193,7 +193,7 @@ E.g. with the following datafile.yaml,
 integer_val: 5
 float_val: 1.234
 ```
-a metadata file like the following can be used,
+a metadata file similar to the following can be used,
 ```yaml
 global:
     # This non-dynamic attribute resolves to an integer
@@ -209,7 +209,7 @@ global:
 
 - `| number` must be the last portion of the Jinja template (i.e. the string between `{{` and `}}`)
 - `| number` is not valid Jinja itself, it will be removed before resolving the rest of the template with Jinja
-- When using `| number`, `addmeta` will attempt to resolve the value to an integer first, then a float.
+- When using `| number`, `addmeta` will attempt to resolve the attribute's value to an integer first, then a float.
 
 
 ### metadata.yaml support
