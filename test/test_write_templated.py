@@ -330,9 +330,9 @@ def test_now(make_nc):
         ),
         # Test multiple "| numbers"
         (
-            {"number": "{{  __template__.number | number}}{{  __template__.number | number}}"},
-            {"__template__": {"number": "5"}},
-            {"number": 55},
+            {"n": "{{  __template__.x | number}}{{  __template__.x | number}}"},
+            {"__template__": {"x": "5"}},
+            {"n": 55},
             np.int32
         ),
         # Test multiple "| numbers" with varying whitespace
@@ -384,7 +384,7 @@ def test_now(make_nc):
             {"number": 1.5e5},
             np.float64
         ),
-        # Test a templated number without the fake jinja filter
+        # Test a templated number without the dummy jinja filter
         (
             {"number": "{{ __template__.number }}"},
             {"__template__": {"number": "5.1"}},
@@ -414,7 +414,7 @@ def test_number_templates(make_nc, metadata, templates, expected, number_type):
 @pytest.mark.parametrize(
     "metadata,templates,failure_str",
     [
-        # Test a string with the fake number jinja filter
+        # Test a string with the dummy number jinja filter
         (
             {"number": "{{ __template__.number | number }}"},
             {"__template__": {"number": "five"}},
