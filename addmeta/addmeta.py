@@ -2,20 +2,18 @@
 
 from __future__ import print_function
 
-
-from collections import defaultdict
-from collections.abc import Mapping
 import copy
 import csv
-from datetime import datetime, timezone
 import io
-from pathlib import Path
 import re
+from collections.abc import Mapping
+from datetime import datetime, timezone
+from pathlib import Path
 from warnings import warn
 
-from jinja2 import Template, StrictUndefined, UndefinedError
 import netCDF4 as nc
 import yaml
+from jinja2 import StrictUndefined, Template, UndefinedError
 
 
 # From https://gist.github.com/angstwad/bf22d1822c38a92ec0a9
@@ -110,6 +108,10 @@ def add_meta(ncfile, metadict, template_vars, sort_attrs=False, history=None, ve
     """
     Add meta data from a dictionary to a netCDF file
     """
+    # There are some operations below that can modify metadict, e.g. while sorting
+    # Make a copy to prevent modifications affecting the original object
+    metadict = copy.deepcopy(metadict)
+
     rootgrp = nc.Dataset(ncfile, "r+")
 
     # Rename variables and dimensions
