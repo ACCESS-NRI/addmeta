@@ -18,11 +18,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import shutil
+
 import pytest
 import xarray
+from common import get_meta_data_from_file, make_nc, runcmd
 
 from addmeta import order_dict
-from common import runcmd, get_meta_data_from_file, make_nc
+
 
 @pytest.fixture
 def make_xarray_nc():
@@ -211,3 +214,41 @@ def test_var_sorting(make_nc, yaml, attr_lists, do_sort):
             expected_attrs_order.insert(0, expected_attrs_order.pop(expected_attrs_order.index("_FillValue")))
 
         assert list(actual.keys()) == expected_attrs_order
+
+@pytest.mark.parametrize(
+    "yaml",
+    [
+        "test/meta_simple1.yaml",
+    ]
+)
+@pytest.mark.parametrize("do_sort", [True, False])
+def test_metadict_mutability(make_nc, yaml, do_sort):
+    """
+    At one point the metadict passed to the addmeta function was being modified
+    by said function causing later uses to be corrupted.
+
+    Test here that metadict is not modified by repeated calls to addmeta, particularly
+    when sorting is enabled.
+    """
+    # Make a copy of the nc file
+    file1 = make_nc
+    file2 = file1 + "2"
+    shutil.copy(file1, file2)
+    
+    # This yaml has fullpath: "{{ __file__.fullpath }}"
+    # which can be used to test for metadict corruption
+    path_yaml = "test/meta_fullpath.yaml"
+
+    # First get the path onto the files
+    runcmd(f"addmeta -m {path_yaml} {file1}")
+    runcmd(f"addmeta -m {path_yaml} {file2}")
+
+    # Now test with another yaml that does not modify global:fullpath in a single call
+    sort_cmd = "-s" if do_sort else ""
+    runcmd(f"addmeta -v {sort_cmd} -m {yaml} {file1} {file2}")
+
+    # Check that the fullpath attr matches each file
+    for f in [file1, file2]:
+        actual = get_meta_data_from_file(f)
+
+        assert actual['fullpath'] == f

@@ -1,0 +1,2 @@
+global:
+  fullpath: "{{ __file__.fullpath }}"
