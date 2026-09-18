@@ -119,14 +119,15 @@ def test_main_direct_meta(mock_combine_meta, mock_find_and_add_meta):
     )
     # Mock combine_meta to return a specific dictionary
     mock_combine_meta.return_value = {'global': {'a': 'from file'}}
-    # Provide direct_meta which will override the 'global' metadata from the metafile
+    # Provide direct_meta which provides default values that are overriden
+    # by the 'global' metadata from the metafile
     direct_meta = {'global': {'a': 'direct', 'b': 'also direct'}}
 
     addmeta.cli.main(args, direct_meta=direct_meta)
 
     mock_find_and_add_meta.assert_called_once_with(
         args.files,
-        {'global': {'a': 'direct', 'b': 'also direct'}},
+        {'global': {'a': 'from file', 'b': 'also direct'}},
         {},
         args.fnregex,
         sort_attrs=args.sort,

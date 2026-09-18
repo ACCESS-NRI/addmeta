@@ -73,8 +73,8 @@ def main(args, direct_meta=None):
     """
     Main routine. Takes return value from parse.parse_args as input
 
-    Takes optional direct_meta argument which is a dictionary of metadata to be added 
-    directly. This is useful for programmatic invocation of the main function.
+    Takes optional direct_meta argument which is a dictionary of default metadata. 
+    This is useful for programmatic invocation of the main function.
     """
     metafiles = []
     verbose = args.verbose
@@ -109,12 +109,16 @@ def main(args, direct_meta=None):
     else:
         history = None
 
-    # Combine all metadata from metafiles into a single dictionary
-    meta_dict = combine_meta(metafiles) 
-
     # Merge the default metadata with the metadata from the metafiles
-    if direct_meta is not None:
-        dict_merge(meta_dict, direct_meta)
+    if direct_meta is None:
+        meta_dict = {}
+    else:
+        meta_dict = direct_meta
+
+    # import pdb; pdb.set_trace()
+
+    # Combine all metadata from metafiles and default into a single dictionary
+    dict_merge(meta_dict, combine_meta(metafiles)) 
 
     find_and_add_meta(
         args.files,
