@@ -27,6 +27,7 @@ from platform import python_version
 import sys
 
 from addmeta import (
+    dict_merge,
     find_and_add_meta,
     combine_meta,
     list_from_file,
@@ -68,9 +69,12 @@ def parse_key_value_pairs(pairs):
         result[key] = value
     return result
 
-def main(args):
+def main(args, direct_meta=None):
     """
     Main routine. Takes return value from parse.parse_args as input
+
+    Takes optional direct_meta argument which is a dictionary of metadata to be added 
+    directly. This is useful for programmatic invocation of the main function.
     """
     metafiles = []
     verbose = args.verbose
@@ -105,9 +109,16 @@ def main(args):
     else:
         history = None
 
+    # Combine all metadata from metafiles into a single dictionary
+    meta_dict = combine_meta(metafiles) 
+
+    # Merge the default metadata with the metadata from the metafiles
+    if direct_meta is not None:
+        dict_merge(meta_dict, direct_meta)
+
     find_and_add_meta(
         args.files,
-        combine_meta(metafiles),
+        meta_dict,
         kwdata,
         args.fnregex,
         sort_attrs=args.sort,
@@ -154,7 +165,7 @@ def build_history(files):
 
 def main_parse_args(args):
     """
-    Call main with list of arguments. Callable from tests
+    Function to generate arguments for main.  Callable from tests.
     """
 
     parser, parsed_args = parse_args(args)

@@ -103,6 +103,37 @@ def test_missing_cmdlinearg_file2():
     with pytest.raises(FileNotFoundError, match=f"No such file or directory: 'filedoesnotexist'"):
        addmeta.cli.main(addmeta.cli.main_parse_args(args))
 
+@patch('addmeta.cli.find_and_add_meta')
+@patch('addmeta.cli.combine_meta')
+def test_main_direct_meta(mock_combine_meta, mock_find_and_add_meta):
+    args = Namespace(
+        datafiles=None,
+        datavar=[],
+        metalist=None,
+        metafiles=['test/meta_simple1.yaml'],
+        files=['test/ocean_1.nc'],
+        fnregex=[],
+        sort=False,
+        update_history=False,
+        verbose=False,
+    )
+    # Mock combine_meta to return a specific dictionary
+    mock_combine_meta.return_value = {'global': {'a': 'from file'}}
+    # Provide direct_meta which will override the 'global' metadata from the metafile
+    direct_meta = {'global': {'a': 'direct', 'b': 'also direct'}}
+
+    addmeta.cli.main(args, direct_meta=direct_meta)
+
+    mock_find_and_add_meta.assert_called_once_with(
+        args.files,
+        {'global': {'a': 'direct', 'b': 'also direct'}},
+        {},
+        args.fnregex,
+        sort_attrs=args.sort,
+        history=None,
+        verbose=args.verbose,
+    )
+
 @patch('addmeta.cli.main')
 @pytest.mark.parametrize("args,expected_namespace",
     [
