@@ -115,8 +115,6 @@ def main(args, direct_meta=None):
     else:
         meta_dict = direct_meta
 
-    # import pdb; pdb.set_trace()
-
     # Combine all metadata from metafiles and default into a single dictionary
     dict_merge(meta_dict, combine_meta(metafiles)) 
 
