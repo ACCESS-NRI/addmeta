@@ -270,13 +270,21 @@ Sorting for all global and variable attributes can be enabled with the `-s`/`--s
 > [!NOTE]
 > The `_FillValue` attribute of variables cannot be sorted.
 
+### CF Reference Checks
+
+Reference checks for CF variable attributes can be enabled with
+`--cf-compliance`. When enabled, references are checked against variables in
+the file and names listed in the global `external_variables` attribute. An
+attribute containing a missing reference is skipped and a warning is issued.
+The check is disabled by default.
+
 ## Invocation
 
 `addmeta` provides a command line interface. Invoking with the `-h` flag prints
 a summay of how to invoke the program correctly.
 
     $ addmeta -h
-    usage: addmeta [-h] [-c CMDLINEARGS] [-m METAFILES] [-l METALIST] [-d DATAFILES] [-f FNREGEX] [-s] [-v] [files ...]
+    usage: addmeta [-h] [-c CMDLINEARGS] [-m METAFILES] [-l METALIST] [-d DATAFILES] [-f FNREGEX] [-s] [--cf-compliance] [-v] [files ...]
 
     Add meta data to one or more netCDF files
 
@@ -297,6 +305,7 @@ a summay of how to invoke the program correctly.
                             Extract metadata from filename using regex
     -s, --sort            Sort global and variable attributes lexicographically, ignoring case
     --update-history      Update or create the history global attribute
+    --cf-compliance       Check referenced variables against CF conventions
     -v, --verbose         Verbose output
 
 

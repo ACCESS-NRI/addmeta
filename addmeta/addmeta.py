@@ -104,7 +104,75 @@ def update_history_attr(group, history, verbose=False):
     group.setncattr("history", history)
 
 
-def add_meta(ncfile, metadict, template_vars, sort_attrs=False, history=None, verbose=False):
+CF_REFERENCE_ATTRIBUTES = {
+    "ancillary_variables",
+    "bounds",
+    "cell_measures",
+    "cell_methods",
+    "climatology",
+    "coordinate_interpolation",
+    "coordinates",
+    "formula_terms",
+    "geometry",
+    "grid_mapping",
+    "location_index_set",
+    "mesh",
+    "quantization",
+}
+
+
+def _referenced_variables(attribute, value):
+    """Return variable names referenced by a CF attribute value."""
+    if not isinstance(value, str):
+        return []
+
+    if attribute in {"cell_measures", "formula_terms"}:
+        return [term.strip() for term in re.findall(r":\s*([^\s]+)", value)]
+
+    if attribute == "cell_methods":
+        references = []
+        nesting = 0
+        for match in re.finditer(r"\(|\)|([^\s:()]+)\s*:", value):
+            if match.group() == "(":
+                nesting += 1
+            elif match.group() == ")":
+                nesting -= 1
+            elif nesting == 0:
+                references.append(match.group(1))
+        return references
+
+    return value.split() if attribute in {"ancillary_variables", "coordinates"} else value.split()[:1]
+
+
+def _external_variables(rootgrp, metadict):
+    """Return external variable names already present or being added."""
+    external = rootgrp.__dict__.get("external_variables", "")
+    pending = metadict.get("global", {}).get("external_variables", "")
+    values = [external, pending]
+    return {name for value in values if isinstance(value, str) for name in value.split()}
+
+
+def _check_cf_references(rootgrp, attribute, value, external_variables):
+    """Return whether a CF attribute references only known variables."""
+    references = _referenced_variables(attribute, value)
+    known_variables = set(rootgrp.variables) | external_variables
+
+    if attribute == "cell_methods":
+        known_variables |= set(rootgrp.dimensions)
+
+    missing = [reference for reference in references if reference not in known_variables]
+    if missing:
+        warn(
+            f"Skip setting attribute '{attribute}': referenced variable(s) "
+            f"{', '.join(missing)} do not exist in the file or external_variables"
+        )
+        return False
+
+    return True
+
+
+def add_meta(ncfile, metadict, template_vars, sort_attrs=False, history=None,
+             verbose=False, cf_compliance=False):
     """
     Add meta data from a dictionary to a netCDF file
     """
@@ -113,6 +181,7 @@ def add_meta(ncfile, metadict, template_vars, sort_attrs=False, history=None, ve
     metadict = copy.deepcopy(metadict)
 
     rootgrp = nc.Dataset(ncfile, "r+")
+    external_variables = _external_variables(rootgrp, metadict) if cf_compliance else set()
 
     # Rename variables and dimensions
     if "rename" in metadict:
@@ -134,7 +203,10 @@ def add_meta(ncfile, metadict, template_vars, sort_attrs=False, history=None, ve
                                                          attr_dict)
 
                 for attr, value in attr_dict.items():
-                    set_attribute(rootgrp.variables[var], attr, value, template_vars, verbose=verbose, var=var)
+                    set_attribute(rootgrp.variables[var], attr, value, template_vars,
+                                  verbose=verbose, var=var,
+                                  cf_compliance=cf_compliance,
+                                  external_variables=external_variables)
 
     # Update (or create) the history attribute
     if history:
@@ -197,7 +269,8 @@ def rename_var_or_dim(group, old_name, new_name, is_var=True, verbose=False):
     except KeyError:
         if verbose: print(f"      ~ {s} \"{old_name}\" not found, can't rename to \"{new_name}\"")
 
-def set_attribute(group, attribute, value, template_vars, verbose=False, var=None):
+def set_attribute(group, attribute, value, template_vars, verbose=False, var=None,
+                  cf_compliance=False, external_variables=None):
     """
     Small wrapper to select, delete, or set attribute depending 
     on value passed and expand jinja template variables
@@ -232,6 +305,11 @@ def set_attribute(group, attribute, value, template_vars, verbose=False, var=Non
                         value = int(value)
                     except ValueError:
                         value = float(value)
+                if (cf_compliance and isinstance(group, nc.Variable)
+                    and attribute in CF_REFERENCE_ATTRIBUTES):
+                    if not _check_cf_references(
+                            group.group(), attribute, value, external_variables or set()):
+                        return
             except UndefinedError as e:
                 warn(f"Skip setting attribute '{attr_name}': {e}")
                 return
@@ -277,7 +355,8 @@ def load_data_files(datafiles):
 
     return namespace_dict
 
-def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, history=None, verbose=False):
+def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, history=None,
+                      verbose=False, cf_compliance=False):
     """
     Add meta data from 1 or more yaml formatted files to one or more
     netCDF files
@@ -304,7 +383,8 @@ def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, his
             template_vars,
             sort_attrs=sort_attrs,
             history=history,
-            verbose=verbose
+            verbose=verbose,
+            cf_compliance=cf_compliance,
         )
 
 def skip_comments(file):
