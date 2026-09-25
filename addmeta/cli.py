@@ -52,6 +52,7 @@ def parse_args(args):
     parser.add_argument("--datavar", help="Key/value pair to be added as data variable, e.g. --datavar 'var=value'", default=[], action='append')
     parser.add_argument("-s","--sort", help="Sort global and variable attributes lexicographically, ignoring case", action="store_true")
     parser.add_argument("--update-history", help="Update (or create) the history global attribute", action="store_true")
+    parser.add_argument("--cf-compliance", help="Check referenced variables against CF conventions", action="store_true")
     parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
     parser.add_argument("files", help="netCDF files", nargs='*')
 
@@ -126,6 +127,7 @@ def main(args, direct_meta=None):
         sort_attrs=args.sort,
         history=history,
         verbose=verbose,
+        cf_compliance=getattr(args, "cf_compliance", False),
     )
 
 def safe_join_lists(list1, list2):
@@ -205,6 +207,7 @@ def main_parse_args(args):
         parsed_args.fnregex = safe_join_lists(parsed_args.fnregex, new_parsed_args.fnregex)
         parsed_args.datavar = safe_join_lists(parsed_args.datavar, new_parsed_args.datavar)
         parsed_args.verbose = parsed_args.verbose or new_parsed_args.verbose
+        parsed_args.cf_compliance = parsed_args.cf_compliance or new_parsed_args.cf_compliance
         parsed_args.cmdlineargs = None
 
 
