@@ -123,25 +123,37 @@ CF_REFERENCE_ATTRIBUTES = {
 
 def _referenced_variables(attribute, value):
     """Return variable names referenced by a CF attribute value."""
+
+    # Reference attributes should be strings, but if not return an empty list
     if not isinstance(value, str):
         return []
 
-    if attribute in {"cell_measures", "formula_terms"}:
-        return [term.strip() for term in re.findall(r":\s*([^\s]+)", value)]
+    match attribute:
+        case "ancillary_variables" | "bounds" | "coordinates":
+            # These attributes are space-separated lists of variable names
+            return value.split()
+        case "cell_measures" | "formula_terms":
+            # These attributes are in the format attribute:variable pairs
+            return [term.strip() for term in re.findall(r":\s*([^\s]+)", value)]
+        case "cell_methods":
+            # This attribute is in the format variable:method pairs, but the method
+            # can contain parentheses which may contain colons, so we need to ignore 
+            # colons inside parentheses. We can do this by keeping track of the nesting 
+            # level of parentheses.    
+            references = []
+            nesting = 0
+            for match in re.finditer(r"\(|\)|([^\s:()]+)\s*:", value):
+                if match.group() == "(":
+                    nesting += 1
+                elif match.group() == ")":
+                    nesting -= 1
+                elif nesting == 0:
+                    references.append(match.group(1))
+            return references
+        case _:
+            # For any other attribute, return the first word (if any)
+            return value.split()[:1]
 
-    if attribute == "cell_methods":
-        references = []
-        nesting = 0
-        for match in re.finditer(r"\(|\)|([^\s:()]+)\s*:", value):
-            if match.group() == "(":
-                nesting += 1
-            elif match.group() == ")":
-                nesting -= 1
-            elif nesting == 0:
-                references.append(match.group(1))
-        return references
-
-    return value.split() if attribute in {"ancillary_variables", "coordinates"} else value.split()[:1]
 
 
 def _external_variables(rootgrp, metadict):
