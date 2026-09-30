@@ -309,6 +309,7 @@ def set_attribute(group, attribute, value, template_vars, verbose=False, var=Non
                     and attribute in CF_REFERENCE_ATTRIBUTES):
                     if not _check_cf_references(
                             group.group(), attribute, value, external_variables or set()):
+                        # If any variables referenced by the attribute are missing skip it
                         return
             except UndefinedError as e:
                 warn(f"Skip setting attribute '{attr_name}': {e}")
