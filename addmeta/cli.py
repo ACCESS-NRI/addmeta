@@ -127,7 +127,7 @@ def main(args, direct_meta=None):
         sort_attrs=args.sort,
         history=history,
         verbose=verbose,
-        cf_compliance=getattr(args, "cf_compliance", False),
+        cf_check_var_refs=getattr(args, "cf_check_var_refs", False),
     )
 
 def safe_join_lists(list1, list2):
@@ -207,7 +207,7 @@ def main_parse_args(args):
         parsed_args.fnregex = safe_join_lists(parsed_args.fnregex, new_parsed_args.fnregex)
         parsed_args.datavar = safe_join_lists(parsed_args.datavar, new_parsed_args.datavar)
         parsed_args.verbose = parsed_args.verbose or new_parsed_args.verbose
-        parsed_args.cf_compliance = parsed_args.cf_compliance or new_parsed_args.cf_compliance
+        parsed_args.cf_check_var_refs = parsed_args.cf_check_var_refs or new_parsed_args.cf_check_var_refs
         parsed_args.cmdlineargs = None
 
 
