@@ -52,7 +52,7 @@ def parse_args(args):
     parser.add_argument("--datavar", help="Key/value pair to be added as data variable, e.g. --datavar 'var=value'", default=[], action='append')
     parser.add_argument("-s","--sort", help="Sort global and variable attributes lexicographically, ignoring case", action="store_true")
     parser.add_argument("--update-history", help="Update (or create) the history global attribute", action="store_true")
-    parser.add_argument("--cf-compliance", help="Check referenced variables against CF conventions", action="store_true")
+    parser.add_argument("--cf-check-var-refs", help="Check variables referenced in CF-defined attributes exist", action="store_true")
     parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
     parser.add_argument("files", help="netCDF files", nargs='*')
 
