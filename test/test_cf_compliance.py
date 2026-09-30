@@ -34,7 +34,7 @@ def test_missing_reference_is_skipped(make_nc):
     metadata = {"variables": {"temp": {"bounds": "missing_bounds"}}}
 
     with pytest.warns(UserWarning, match="missing_bounds"):
-        add_meta(make_nc, metadata, {}, cf_compliance=True)
+        add_meta(make_nc, metadata, {}, cf_check_var_refs=True)
 
     assert "bounds" not in get_attributes(make_nc, "temp")
 
@@ -55,7 +55,7 @@ def test_existing_and_external_references_are_written(make_nc):
         },
     }
 
-    add_meta(make_nc, metadata, {}, cf_compliance=True)
+    add_meta(make_nc, metadata, {}, cf_check_var_refs=True)
     attributes = get_attributes(make_nc, "temp")
 
     assert attributes["coordinates"] == "Times"
@@ -65,15 +65,15 @@ def test_existing_and_external_references_are_written(make_nc):
     assert attributes["cell_methods"] == "Times: mean"
 
 
-@pytest.mark.parametrize("cf_compliance", [False, True])
-def test_complicated_cell_methods_are_checked(make_nc, cf_compliance):
+@pytest.mark.parametrize("cf_check_var_refs", [False, True])
+def test_complicated_cell_methods_are_checked(make_nc, cf_check_var_refs):
     cell_methods = "temp: salt: maximum"
     metadata = {"variables": {"temp": {"cell_methods": cell_methods}}}
-
-    add_meta(make_nc, metadata, {}, cf_compliance=cf_compliance, verbose=True)
+    
+    add_meta(make_nc, metadata, {}, cf_check_var_refs=cf_check_var_refs, verbose=True)
 
     attributes = get_attributes(make_nc, "temp")
-    if cf_compliance:
+    if cf_check_var_refs:
         assert "cell_methods" not in attributes
     else:
         assert attributes["cell_methods"] == cell_methods
@@ -84,7 +84,7 @@ def test_missing_cell_methods_reference_is_skipped(make_nc):
     metadata = {"variables": {"temp": {"cell_methods": cell_methods}}}
 
     with pytest.warns(UserWarning, match="missing"):
-        add_meta(make_nc, metadata, {}, cf_compliance=True)
+        add_meta(make_nc, metadata, {}, cf_check_var_refs=True)
 
     assert "cell_methods" not in get_attributes(make_nc, "temp")
 
@@ -92,6 +92,6 @@ def test_missing_cell_methods_reference_is_skipped(make_nc):
 def test_templated_reference_is_checked_after_rendering(make_nc):
     metadata = {"variables": {"temp": {"coordinates": "{{ coordinate }}"}}}
 
-    add_meta(make_nc, metadata, {"coordinate": "Times"}, cf_compliance=True)
+    add_meta(make_nc, metadata, {"coordinate": "Times"}, cf_check_var_refs=True)
 
     assert get_attributes(make_nc, "temp")["coordinates"] == "Times"

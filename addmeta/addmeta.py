@@ -172,7 +172,7 @@ def _check_cf_references(rootgrp, attribute, value, external_variables):
 
 
 def add_meta(ncfile, metadict, template_vars, sort_attrs=False, history=None,
-             verbose=False, cf_compliance=False):
+             verbose=False, cf_check_var_refs=False):
     """
     Add meta data from a dictionary to a netCDF file
     """
@@ -181,7 +181,7 @@ def add_meta(ncfile, metadict, template_vars, sort_attrs=False, history=None,
     metadict = copy.deepcopy(metadict)
 
     rootgrp = nc.Dataset(ncfile, "r+")
-    external_variables = _external_variables(rootgrp, metadict) if cf_compliance else set()
+    external_variables = _external_variables(rootgrp, metadict) if cf_check_var_refs else set()
 
     # Rename variables and dimensions
     if "rename" in metadict:
@@ -205,7 +205,7 @@ def add_meta(ncfile, metadict, template_vars, sort_attrs=False, history=None,
                 for attr, value in attr_dict.items():
                     set_attribute(rootgrp.variables[var], attr, value, template_vars,
                                   verbose=verbose, var=var,
-                                  cf_compliance=cf_compliance,
+                                  cf_check_var_refs=cf_check_var_refs,
                                   external_variables=external_variables)
 
     # Update (or create) the history attribute
@@ -270,7 +270,7 @@ def rename_var_or_dim(group, old_name, new_name, is_var=True, verbose=False):
         if verbose: print(f"      ~ {s} \"{old_name}\" not found, can't rename to \"{new_name}\"")
 
 def set_attribute(group, attribute, value, template_vars, verbose=False, var=None,
-                  cf_compliance=False, external_variables=None):
+                  cf_check_var_refs=False, external_variables=None):
     """
     Small wrapper to select, delete, or set attribute depending 
     on value passed and expand jinja template variables
@@ -305,7 +305,7 @@ def set_attribute(group, attribute, value, template_vars, verbose=False, var=Non
                         value = int(value)
                     except ValueError:
                         value = float(value)
-                if (cf_compliance and isinstance(group, nc.Variable)
+                if (cf_check_var_refs and isinstance(group, nc.Variable)
                     and attribute in CF_REFERENCE_ATTRIBUTES):
                     if not _check_cf_references(
                             group.group(), attribute, value, external_variables or set()):
@@ -357,7 +357,7 @@ def load_data_files(datafiles):
     return namespace_dict
 
 def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, history=None,
-                      verbose=False, cf_compliance=False):
+                      verbose=False, cf_check_var_refs=False):
     """
     Add meta data from 1 or more yaml formatted files to one or more
     netCDF files
@@ -385,7 +385,7 @@ def find_and_add_meta(ncfiles, metadata, kwdata, fnregexs, sort_attrs=False, his
             sort_attrs=sort_attrs,
             history=history,
             verbose=verbose,
-            cf_compliance=cf_compliance,
+            cf_check_var_refs=cf_check_var_refs,
         )
 
 def skip_comments(file):
