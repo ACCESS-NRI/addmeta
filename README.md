@@ -273,10 +273,13 @@ Sorting for all global and variable attributes can be enabled with the `-s`/`--s
 ### CF Reference Checks
 
 Reference checks for CF variable attributes can be enabled with
-`--cf-compliance`. When enabled, references are checked against variables in
-the file and names listed in the global `external_variables` attribute. An
-attribute containing a missing reference is skipped and a warning is issued.
-The check is disabled by default.
+`--cf-check-var-refs`. When enabled, references are checked against
+variables in the file and names listed in the global `external_variables`
+attribute. An attribute containing a missing reference is skipped and a warning
+is issued. The check is disabled by default.
+
+The `cell_methods` attribute is not included in this check it is too complex to 
+parse accurately for reliable reference validation.
 
 ## Invocation
 
@@ -284,7 +287,7 @@ The check is disabled by default.
 a summay of how to invoke the program correctly.
 
     $ addmeta -h
-    usage: addmeta [-h] [-c CMDLINEARGS] [-m METAFILES] [-l METALIST] [-d DATAFILES] [-f FNREGEX] [-s] [--cf-compliance] [-v] [files ...]
+    usage: addmeta [-h] [-c CMDLINEARGS] [-m METAFILES] [-l METALIST] [-d DATAFILES] [-f FNREGEX] [-s] [--update-history] [--cf-check-var-refs] [-v] [files ...]
 
     Add meta data to one or more netCDF files
 
@@ -305,7 +308,7 @@ a summay of how to invoke the program correctly.
                             Extract metadata from filename using regex
     -s, --sort            Sort global and variable attributes lexicographically, ignoring case
     --update-history      Update or create the history global attribute
-    --cf-compliance       Check referenced variables against CF conventions
+    --cf-check-var-refs   Check variables referenced in CF-defined attributes exist
     -v, --verbose         Verbose output
 
 
