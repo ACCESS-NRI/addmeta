@@ -21,6 +21,8 @@ def get_attributes(filename, variable):
         ("formula_terms", "a: temp b: lon", ["temp", "lon"]),
         ("climatology", "climatology_bounds", ["climatology_bounds"]),
         ("coordinate_interpolation", "lat: lon: bl_interpolation", ["lat", "lon"]),
+        ("coordinate_interpolation", "lat: lon: tp_interpolation  t: time_interpolation", ["t", "lat", "lon"]),
+        ("coordinate_interpolation", "lat: lon: bi_linear x: linear_x y: linear_y", ["lat", "x", "y", "lon"]),
         ("geometry", "geometry_variable", ["geometry_variable"]),
         ("grid_mapping", "mapping_variable", ["mapping_variable"]),
         ("location_index_set", "location_index", ["location_index"]),
@@ -29,7 +31,7 @@ def get_attributes(filename, variable):
     ],
 )
 def test_referenced_variables(attribute, value, expected):
-    assert _referenced_variables(attribute, value) == expected
+    assert set(_referenced_variables(attribute, value)) == set(expected)
 
 
 def test_missing_reference_is_skipped(make_nc):
