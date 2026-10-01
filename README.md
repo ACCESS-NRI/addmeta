@@ -273,13 +273,15 @@ Sorting for all global and variable attributes can be enabled with the `-s`/`--s
 ### CF Reference Checks
 
 Reference checks for CF variable attributes can be enabled with
-`--cf-check-var-refs`. When enabled, references are checked against
-variables in the file and names listed in the global `external_variables`
-attribute. An attribute containing a missing reference is skipped and a warning
-is issued. The check is disabled by default.
+`--cf-check-var-refs`. When enabled, references to variables (not dimensions)
+in attributes are checked against variables in the file and names listed in 
+the global `external_variables` attribute. An attribute containing a reference to 
+a missing variable is skipped and a warning is issued. The check is disabled 
+by default.
 
-The `cell_methods` attribute is not included in this check it is too complex to 
-parse accurately for reliable reference validation.
+> [!NOTE]
+> The `cell_methods` attribute is not included in this check it is too complex to 
+> parse accurately for reliable reference validation.
 
 ## Invocation
 
