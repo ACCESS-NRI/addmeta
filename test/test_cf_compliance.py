@@ -19,6 +19,13 @@ def get_attributes(filename, variable):
         ("bounds", "missing_bounds", ["missing_bounds"]),
         ("cell_measures", "area: area volume: volume", ["area", "volume"]),
         ("formula_terms", "a: temp b: lon", ["temp", "lon"]),
+        ("climatology", "climatology_bounds", ["climatology_bounds"]),
+        ("coordinate_interpolation", "lat: lon: bl_interpolation", ["lat", "lon"]),
+        ("geometry", "geometry_variable", ["geometry_variable"]),
+        ("grid_mapping", "mapping_variable", ["mapping_variable"]),
+        ("location_index_set", "location_index", ["location_index"]),
+        ("mesh", "mesh_variable", ["mesh_variable"]),
+        ("quantization", "quantization_variable", ["quantization_variable"]),
     ],
 )
 def test_referenced_variables(attribute, value, expected):

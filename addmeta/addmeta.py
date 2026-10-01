@@ -134,6 +134,9 @@ def _referenced_variables(attribute, value):
         case "cell_measures" | "formula_terms":
             # These attributes are in the format attribute:variable pairs
             return [term.strip() for term in re.findall(r":\s*([^\s]+)", value)]
+        case "coordinate_interpolation":
+            # Coordinate names precede the interpolation variable name
+            return re.findall(r"([^\s:]+)\s*:", value)
         case _:
             # For any other attribute, return the first word (if any)
             return value.split()[:1]
