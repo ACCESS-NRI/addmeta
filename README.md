@@ -280,8 +280,8 @@ a missing variable is skipped and a warning is issued. The check is disabled
 by default.
 
 > [!NOTE]
-> The `cell_methods` attribute is not included in this check it is too complex to 
-> parse accurately for reliable reference validation.
+> The `cell_methods` attribute is not included in this check as it is too complex 
+> to parse accurately for reliable reference validation.
 
 ## Invocation
 
