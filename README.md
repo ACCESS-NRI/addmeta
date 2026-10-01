@@ -279,6 +279,9 @@ the global `external_variables` attribute. An attribute containing a reference t
 a missing variable is skipped and a warning is issued. The check is disabled 
 by default.
 
+Checked attributes: `bounds`, `cell_measures`, `climatology`, `coordinate_interpolation`, `coordinates`, `formula_terms`, `geometry`, `grid_mapping`, `location_index_set`, `mesh`, `quantization`, `tie_point_mapping`.
+
+
 > [!NOTE]
 > The `cell_methods` attribute is not included in this check as it is too complex 
 > to parse accurately for reliable reference validation.
