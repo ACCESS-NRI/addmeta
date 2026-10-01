@@ -270,13 +270,29 @@ Sorting for all global and variable attributes can be enabled with the `-s`/`--s
 > [!NOTE]
 > The `_FillValue` attribute of variables cannot be sorted.
 
+### CF Reference Checks
+
+Reference checks for CF variable attributes can be enabled with
+`--cf-check-var-refs`. When enabled, references to variables (not dimensions)
+in attributes are checked against variables in the file and names listed in 
+the global `external_variables` attribute. An attribute containing a reference to 
+a missing variable is skipped and a warning is issued. The check is disabled 
+by default.
+
+Checked attributes: `bounds`, `cell_measures`, `climatology`, `coordinate_interpolation`, `coordinates`, `formula_terms`, `geometry`, `grid_mapping`, `location_index_set`, `mesh`, `quantization`, `tie_point_mapping`.
+
+
+> [!NOTE]
+> The `cell_methods` attribute is not included in this check as it is too complex 
+> to parse accurately for reliable reference validation.
+
 ## Invocation
 
 `addmeta` provides a command line interface. Invoking with the `-h` flag prints
 a summay of how to invoke the program correctly.
 
     $ addmeta -h
-    usage: addmeta [-h] [-c CMDLINEARGS] [-m METAFILES] [-l METALIST] [-d DATAFILES] [-f FNREGEX] [-s] [-v] [files ...]
+    usage: addmeta [-h] [-c CMDLINEARGS] [-m METAFILES] [-l METALIST] [-d DATAFILES] [-f FNREGEX] [-s] [--update-history] [--cf-check-var-refs] [-v] [files ...]
 
     Add meta data to one or more netCDF files
 
@@ -297,6 +313,7 @@ a summay of how to invoke the program correctly.
                             Extract metadata from filename using regex
     -s, --sort            Sort global and variable attributes lexicographically, ignoring case
     --update-history      Update or create the history global attribute
+    --cf-check-var-refs   Check variables referenced in CF-defined attributes exist
     -v, --verbose         Verbose output
 
 

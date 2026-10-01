@@ -58,6 +58,7 @@ def test_cmdlinearg_from_file(mock_main, touch_nc):
               sort=False,
               verbose=False, 
               update_history=False,
+              cf_check_var_refs=False,
               files=touch_nc[0:2],
               )
 
@@ -115,6 +116,7 @@ def test_main_direct_meta(mock_combine_meta, mock_find_and_add_meta):
         fnregex=[],
         sort=False,
         update_history=False,
+        cf_check_var_refs=False,
         verbose=False,
     )
     # Mock combine_meta to return a specific dictionary
@@ -133,6 +135,7 @@ def test_main_direct_meta(mock_combine_meta, mock_find_and_add_meta):
         sort_attrs=args.sort,
         history=None,
         verbose=args.verbose,
+        cf_check_var_refs=args.cf_check_var_refs,
     )
 
 @patch('addmeta.cli.main')
@@ -150,6 +153,7 @@ def test_main_direct_meta(mock_combine_meta, mock_find_and_add_meta):
                 sort=False, 
                 verbose=False, 
                 update_history=False,
+                cf_check_var_refs=False,
                 files=['test/ocean_1.nc'])
         ),
     ]
