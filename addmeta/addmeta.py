@@ -117,6 +117,7 @@ CF_REFERENCE_ATTRIBUTES = {
     "location_index_set",
     "mesh",
     "quantization",
+    "tie_point_mapping",
 }
 
 
@@ -131,12 +132,13 @@ def _referenced_variables(attribute, value):
         case "ancillary_variables" | "bounds" | "coordinates":
             # These attributes are space-separated lists of variable names
             return value.split()
-        case "cell_measures" | "formula_terms":
+        case "cell_measures" | "formula_terms" | "tie_point_mapping":
             # These attributes are in the format attribute:variable pairs
             return [term.strip() for term in re.findall(r":\s*([^\s]+)", value)]
         case "coordinate_interpolation":
-            # Coordinate names precede the interpolation variable name
-            return re.findall(r"([^\s:]+)\s*:", value)
+            # These attributes are in the format variable: interpolation_variable pairs, 
+            # but there can be multiple variables for a single interpolation method
+            return value.replace(":", " ").split()
         case _:
             # For any other attribute, return the first word (if any)
             return value.split()[:1]
