@@ -19,11 +19,6 @@ def get_attributes(filename, variable):
         ("bounds", "missing_bounds", ["missing_bounds"]),
         ("cell_measures", "area: area volume: volume", ["area", "volume"]),
         ("formula_terms", "a: temp b: lon", ["temp", "lon"]),
-        (
-            "cell_methods",
-            "Times: mean (interval: 1 hour comment: sampled instantaneously) temp: salt: maximum",
-            ["Times", "temp", "salt"],
-        ),
     ],
 )
 def test_referenced_variables(attribute, value, expected):
@@ -50,7 +45,6 @@ def test_existing_and_external_references_are_written(make_nc):
                 "bounds": "external_bounds",
                 "cell_measures": "area: external_area",
                 "formula_terms": "a: external_a b: Times",
-                "cell_methods": "Times: mean",
             }
         },
     }
@@ -62,31 +56,6 @@ def test_existing_and_external_references_are_written(make_nc):
     assert attributes["bounds"] == "external_bounds"
     assert attributes["cell_measures"] == "area: external_area"
     assert attributes["formula_terms"] == "a: external_a b: Times"
-    assert attributes["cell_methods"] == "Times: mean"
-
-
-@pytest.mark.parametrize("cf_check_var_refs", [False, True])
-def test_complicated_cell_methods_are_checked(make_nc, cf_check_var_refs):
-    cell_methods = "temp: salt: maximum"
-    metadata = {"variables": {"temp": {"cell_methods": cell_methods}}}
-    
-    add_meta(make_nc, metadata, {}, cf_check_var_refs=cf_check_var_refs, verbose=True)
-
-    attributes = get_attributes(make_nc, "temp")
-    if cf_check_var_refs:
-        assert "cell_methods" not in attributes
-    else:
-        assert attributes["cell_methods"] == cell_methods
-
-
-def test_missing_cell_methods_reference_is_skipped(make_nc):
-    cell_methods = "Times: mean (interval: 1 hour) missing: maximum"
-    metadata = {"variables": {"temp": {"cell_methods": cell_methods}}}
-
-    with pytest.warns(UserWarning, match="missing"):
-        add_meta(make_nc, metadata, {}, cf_check_var_refs=True)
-
-    assert "cell_methods" not in get_attributes(make_nc, "temp")
 
 
 def test_templated_reference_is_checked_after_rendering(make_nc):

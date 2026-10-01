@@ -108,7 +108,6 @@ CF_REFERENCE_ATTRIBUTES = {
     "ancillary_variables",
     "bounds",
     "cell_measures",
-    "cell_methods",
     "climatology",
     "coordinate_interpolation",
     "coordinates",
@@ -135,21 +134,6 @@ def _referenced_variables(attribute, value):
         case "cell_measures" | "formula_terms":
             # These attributes are in the format attribute:variable pairs
             return [term.strip() for term in re.findall(r":\s*([^\s]+)", value)]
-        case "cell_methods":
-            # This attribute is in the format variable:method pairs, but the method
-            # can contain parentheses which may contain colons, so we need to ignore 
-            # colons inside parentheses. We can do this by keeping track of the nesting 
-            # level of parentheses.    
-            references = []
-            nesting = 0
-            for match in re.finditer(r"\(|\)|([^\s:()]+)\s*:", value):
-                if match.group() == "(":
-                    nesting += 1
-                elif match.group() == ")":
-                    nesting -= 1
-                elif nesting == 0:
-                    references.append(match.group(1))
-            return references
         case _:
             # For any other attribute, return the first word (if any)
             return value.split()[:1]
@@ -168,9 +152,6 @@ def _check_cf_references(rootgrp, attribute, value, external_variables):
     """Return whether a CF attribute references only known variables."""
     references = _referenced_variables(attribute, value)
     known_variables = set(rootgrp.variables) | external_variables
-
-    if attribute == "cell_methods":
-        known_variables |= set(rootgrp.dimensions)
 
     missing = [reference for reference in references if reference not in known_variables]
     if missing:
