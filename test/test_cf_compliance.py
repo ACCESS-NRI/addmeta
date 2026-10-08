@@ -1,0 +1,84 @@
+import netCDF4 as nc
+import pytest
+
+from addmeta import add_meta
+from addmeta.addmeta import _referenced_variables
+from common import make_nc
+
+
+def get_attributes(filename, variable):
+    with nc.Dataset(filename) as dataset:
+        return dict(dataset.variables[variable].__dict__)
+
+
+@pytest.mark.parametrize(
+    ("attribute", "value", "expected"),
+    [
+        ("coordinates", "lat lon", ["lat", "lon"]),
+        ("ancillary_variables", "a b c", ["a", "b", "c"]),
+        ("bounds", "missing_bounds", ["missing_bounds"]),
+        ("cell_measures", "area: area volume: volume", ["area", "volume"]),
+        ("formula_terms", "a: temp b: lon", ["temp", "lon"]),
+        ("climatology", "climatology_bounds", ["climatology_bounds"]),
+        ("coordinate_interpolation", 
+            "lat: lon: bl_interpolation", 
+            ["lat", "lon", "bl_interpolation"]),
+        ("coordinate_interpolation", 
+            "lat: lon: tp_interpolation  t: time_interpolation", 
+            ["t", "lat", "lon", "tp_interpolation", "time_interpolation"]),
+        ("coordinate_interpolation", 
+            "lat: lon: bi_linear x: linear_x y: linear_y", 
+            ["lat", "x", "y", "lon", "bi_linear", "linear_x", "linear_y"]),
+        ("tie_point_mapping", 
+            "track: track_indices tp_track subarea_track scan: scan_indices tp_scan subarea_scan", 
+            ["track_indices", "scan_indices"]),
+        ("geometry", "geometry_variable", ["geometry_variable"]),
+        ("grid_mapping", "mapping_variable", ["mapping_variable"]),
+        ("location_index_set", "location_index", ["location_index"]),
+        ("mesh", "mesh_variable", ["mesh_variable"]),
+        ("quantization", "quantization_variable", ["quantization_variable"]),
+    ],
+)
+def test_referenced_variables(attribute, value, expected):
+    assert set(_referenced_variables(attribute, value)) == set(expected)
+
+
+def test_missing_reference_is_skipped(make_nc):
+    metadata = {"variables": {"temp": {"bounds": "missing_bounds"}}}
+
+    with pytest.warns(UserWarning, match="missing_bounds"):
+        add_meta(make_nc, metadata, {}, cf_check_var_refs=True)
+
+    assert "bounds" not in get_attributes(make_nc, "temp")
+
+
+def test_existing_and_external_references_are_written(make_nc):
+    metadata = {
+        "global": {
+            "external_variables": "external_bounds external_area external_a"
+        },
+        "variables": {
+            "temp": {
+                "coordinates": "Times",
+                "bounds": "external_bounds",
+                "cell_measures": "area: external_area",
+                "formula_terms": "a: external_a b: Times",
+            }
+        },
+    }
+
+    add_meta(make_nc, metadata, {}, cf_check_var_refs=True)
+    attributes = get_attributes(make_nc, "temp")
+
+    assert attributes["coordinates"] == "Times"
+    assert attributes["bounds"] == "external_bounds"
+    assert attributes["cell_measures"] == "area: external_area"
+    assert attributes["formula_terms"] == "a: external_a b: Times"
+
+
+def test_templated_reference_is_checked_after_rendering(make_nc):
+    metadata = {"variables": {"temp": {"coordinates": "{{ coordinate }}"}}}
+
+    add_meta(make_nc, metadata, {"coordinate": "Times"}, cf_check_var_refs=True)
+
+    assert get_attributes(make_nc, "temp")["coordinates"] == "Times"
