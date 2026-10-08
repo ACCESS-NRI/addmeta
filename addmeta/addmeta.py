@@ -153,10 +153,10 @@ def _external_variables(rootgrp, metadict):
     return {name for value in values if isinstance(value, str) for name in value.split()}
 
 
-def _check_cf_references(rootgrp, attribute, value, external_variables):
+def _check_cf_references(group, attribute, value, external_variables):
     """Return whether a CF attribute references only known variables."""
     references = _referenced_variables(attribute, value)
-    known_variables = set(rootgrp.variables) | external_variables
+    known_variables = set(group.variables) | external_variables
 
     missing = [reference for reference in references if reference not in known_variables]
     if missing:

@@ -127,7 +127,7 @@ def main(args, direct_meta=None):
         sort_attrs=args.sort,
         history=history,
         verbose=verbose,
-        cf_check_var_refs=getattr(args, "cf_check_var_refs", False),
+        cf_check_var_refs=args.cf_check_var_refs
     )
 
 def safe_join_lists(list1, list2):
