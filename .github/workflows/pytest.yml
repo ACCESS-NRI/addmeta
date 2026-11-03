@@ -5,6 +5,10 @@ on:
       - master
   pull_request:
   workflow_call:
+
+env:
+  PIP_UPLOADED_PRIOR_TO: P7D
+
 jobs:
   pytest:
     runs-on: ubuntu-latest
@@ -15,10 +19,10 @@ jobs:
     steps:
       - run: sudo apt-get install -y netcdf-bin
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -29,16 +33,10 @@ jobs:
       - name: Run tests
         run: python -m pytest
 
-  codecov:
-    needs: pytest
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install codecov
-        run: pip install codecov
-
-      - name: Upload coverage to codecov
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        run: codecov
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.14'
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 #7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
+          fail_ci_if_error: true
