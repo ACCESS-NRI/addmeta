@@ -11,6 +11,7 @@ jobs:
   test:
     name: Run tests
     uses: ./.github/workflows/pytest.yml
+    secrets: inherit
 
   get-package-name:
     name: Get package name
